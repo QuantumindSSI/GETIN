@@ -1,0 +1,382 @@
+# Testnet Farming Activities Reference
+# Comprehensive list of every possible on-chain action per project.
+# Generated: 2026-07-30
+# Use this as the source-of-truth for watchlist.yaml entries.
+
+projects:
+
+  - name: Monad
+    network: testnet
+    chain_id: 10143
+    rpc: https://testnet-rpc.monad.xyz
+    symbol: MON
+    explorer: https://testnet.monadexplorer.com
+    total_activities: 78
+    faucets:
+      - name: Official Faucet
+        url: https://testnet.monad.xyz/
+        cooldown_hours: 24
+      - name: QuickNode Faucet
+        url: https://faucet.quicknode.com/monad/testnet
+        cooldown_hours: 12
+      - name: Alchemy Faucet
+        url: https://www.alchemy.com/faucets/monad-testnet
+        cooldown_hours: 24
+      - name: Owlto Faucet
+        url: https://owlto.finance/Faucet/Monad
+        cooldown_hours: 24
+      - name: Discord Faucet
+        url: https://discord.gg/monad
+        note: Request 5 MON via Discord verification
+      - name: aPriori Staking Faucet
+        url: http://stake.apr.io/faucet
+        note: Auto-stakes MON when claiming
+    dex_swaps:
+      - name: Uniswap
+        url: https://app.uniswap.org/swap
+      - name: BeanSwap
+        url: https://perp.bean.exchange/
+      - name: iZUMi Finance
+        url: https://alpha.izumi.finance/trade/swap
+      - name: KuruSwap
+        url: https://kuru.io/
+      - name: OctoSwap
+        url: https://octo.exchange/swap
+      - name: Ambient Finance
+        url: https://monad.ambient.finance/
+      - name: PancakeSwap
+        url: https://pancakeswap.finance/
+      - name: ZkSwap
+        url: https://zkswap.finance/swap
+      - name: Pandaria (LFJ)
+        url: https://pandaria.lfj.gg/
+      - name: ApeBond
+        url: https://www.ape.bond/swap
+      - name: Eisen Finance
+        url: https://app.eisenfinance.com/
+      - name: Monorail
+        url: https://testnet-preview.monorail.xyz/
+      - name: Likwid
+        url: https://likwid.fi/
+      - name: Bebop
+        url: https://bebop.xyz/trade?network=monad
+      - name: Taya Swap
+        url: https://app.taya.fi/swap
+      - name: Purps Swap
+        url: https://app.monda.fund/swap
+      - name: AtlantisDEX
+        url: https://app.atlantisdex.xyz/swap/
+      - name: Madhouse
+        url: https://madhouse.ag/
+      - name: Madness Finance
+        url: https://madness.finance/
+      - name: BubbleFi
+        url: https://app.bubblefi.xyz/
+      - name: Clober Alpha
+        url: https://alpha.clober.io/trade?chain=10143
+      - name: Pingu Exchange
+        url: https://pingu.exchange/
+      - name: GlacierFi
+        url: https://glacierfi.com/
+      - name: Dirol DEX
+        url: https://dex.dirol.io/swap
+      - name: Crystal Exchange
+        url: https://app.crystal.exchange/swap
+      - name: Mace
+        url: https://testnet.swaps.mace.ag/
+      - name: Pecker
+        url: https://app.pecker.so/
+      - name: Crust Finance
+        url: https://testnet.crust.finance/swap
+      - name: Sherpa Trade
+        url: https://app.sherpa.trade/
+      - name: Cult.Trade
+        url: https://www.cult.trade/
+      - name: Monday Trade
+        url: https://app.monday.trade/
+      - name: Rubic
+        url: https://testnet.rubic.exchange/
+      - name: Nitro Finance
+        url: https://testapp.nitrofinance.xyz/
+      - name: HakiFi
+        url: https://hakifi.xyz/dapp/pools
+    staking_liquid_staking:
+      - name: aPriori
+        url: https://stake.apr.io/
+        ticker: apMON
+        type: liquid_staking
+      - name: Magma Staking
+        url: https://magmastaking.xyz/
+        ticker: gMON
+        type: liquid_staking
+      - name: Kintsu
+        url: https://kintsu.xyz/beta
+        ticker: sMON
+        type: liquid_staking
+      - name: shmonad Staking
+        url: https://shmonad.xyz/community
+        type: staking
+      - name: Enjoyoors
+        url: https://app.enjoyoors.xyz/monad/wrap
+        type: multi_staking
+      - name: StakeStone
+        url: https://app.stakestone.io/
+        type: cross_chain_staking
+      - name: Multipli
+        url: https://multiplicredits.com/
+        type: restaking_points
+      - name: Dyson Finance
+        url: https://alpha.dyson.finance/
+        type: staking_boost
+      - name: Morpheus Farm
+        url: https://morpheus.farm/
+        type: matrix_farming
+    lending_borrowing:
+      - name: Curvance
+        url: https://monad.curvance.com/
+        note: Earn Bytes points
+      - name: BHive
+        url: https://app.bhive.finance/
+        note: Earn BEE points
+      - name: Sumer Money
+        url: https://app.sumer.money/?chain=10143
+      - name: Nostra Finance
+        url: https://monad.nostra.finance/
+      - name: Mu Digital
+        url: https://testnet.mudigital.net/
+        type: mint_bonds
+    nft_mints:
+      - name: Magic Eden
+        url: https://magiceden.io/monad-testnet
+      - name: Monadverse
+        url: https://www.monadverse.land/mint
+      - name: Fantasy Top
+        url: https://monad.fantasy.top/
+      - name: Kuru Monsters
+        url: https://kuru.io/trade/
+      - name: Freee Marketplace
+        url: https://testnet.freee.xyz/
+      - name: NFTs2Me
+        url: https://nfts2me.com/app/monad-testnet
+    name_services:
+      - name: Nad Domains (.nad)
+        url: https://app.nad.domains/
+      - name: AllDomains (.mon)
+        url: https://monad.alldomains.id/
+      - name: Conft Name Service
+        url: https://conft.app/name-service
+    bridges:
+      - name: Owlto Finance
+        url: https://owlto.finance/
+      - name: CometBridge
+        url: https://cometbridge.app/deploy
+      - name: Stargate (LayerZero)
+        url: https://stargate.finance/
+    daily_check_ins:
+      - name: OnchainGM
+        url: https://onchaingm.com/
+      - name: Talentum ID
+        url: https://monad.talentum.id/projects
+      - name: MetaLeap
+        url: https://metaleap.io/p2e/earn
+      - name: Dusted App
+        url: https://dusted.app/
+      - name: Madness Finance
+        url: https://madness.finance/
+      - name: Blockchain Messages
+        url: https://www.blockchainmessages.xyz/
+    quest_platforms:
+      - name: Talentum ID
+        url: https://monad.talentum.id/
+      - name: Swyrl Finance
+        url: https://swyrl.finance/
+    games:
+      - name: MOnarch Casino
+        url: https://m0narch.xyz/
+      - name: Wenwin Lottery
+        url: https://app.wenwin.com/
+      - name: Accountable Game
+        url: http://game.accountable.capital/
+      - name: Narwhal Finance
+        url: http://testnet.narwhal.finance/
+      - name: Castora Prediction
+        url: https://castora.xyz/
+      - name: Flap Board
+        url: https://monad.flap.sh/board
+    memecoin_launchpads:
+      - name: nad.fun
+        url: https://nad.fun/
+      - name: Fukunad
+        url: https://testnet.fukunad.xyz/
+      - name: Celeris
+        url: https://celeris.exchange/trade
+      - name: XL Meme
+        url: https://testnet.xlmeme.com/monad
+    other:
+      - name: Owlto Contract Deploy
+        url: https://owlto.finance/deploy/?chain=MonadTestnet
+      - name: FWX Finance (Perps)
+        url: https://app.fwx.finance/
+      - name: AI Craft (Voting)
+        url: https://aicraft.fun/
+      - name: Revoke.cash (Approval Cleanup)
+        url: https://revoke.cash/
+
+  - name: Berachain
+    network: testnet
+    chain_id: 80084
+    rpc: https://bartio.rpc.berachain.com/
+    symbol: BERA
+    explorer: https://bartio.beratrail.io/
+    total_activities: 41
+    faucets:
+      - name: Official Faucet
+        url: https://bartio.faucet.berachain.com/
+        cooldown_hours: 8
+        note: Requires 0.001 ETH on mainnet
+      - name: Bepolia Faucet
+        url: https://bepolia.faucet.berachain.com/
+        cooldown_hours: 8
+      - name: QuickNode Faucet
+        url: https://faucet.quicknode.com/berachain/bartio
+        cooldown_hours: 12
+    native_dapps:
+      - name: BEX Swap
+        url: https://bartio.bex.berachain.com/swap
+        type: swap_liquidity
+      - name: Bend Lending
+        url: https://bartio.bend.berachain.com/dashboard
+        type: deposit_borrow
+      - name: Berps Perpetuals
+        url: https://bartio.berps.berachain.com/berpetuals
+        type: leverage_trading
+      - name: Honey Mint (Stablecoin)
+        url: https://bartio.honey.berachain.com/
+        type: stablecoin_mint
+      - name: BGT Station
+        url: https://bartio.station.berachain.com/validators
+        type: delegation_gauge_rewards
+    dex_swaps:
+      - name: Kodiak
+        url: https://app.kodiak.finance/
+      - name: OOGABOOGA
+        url: https://app.oogabooga.io/
+      - name: Rubic
+        url: https://testnet.rubic.exchange/
+      - name: Bebop
+        url: https://bebop.xyz/trade?network=berachain+bartio
+      - name: Honeypot Finance
+        url: https://beta4.honeypotfinance.xyz/swap
+      - name: Beradrome
+        url: https://bartio.beradrome.com/swap
+      - name: Goldilocks DAO
+        url: https://www.goldilocksdao.io/goldiswap/swap
+      - name: iZUMi Finance
+        url: https://alpha.izumi.finance/trade/swap
+    lending_borrowing:
+      - name: Dolomite
+        url: https://app.dolomite.io/balances
+      - name: ZeroLend
+        url: https://app.zerolend.xyz/
+      - name: Beraborrow
+        url: https://magic.beraborrow.com/
+      - name: Abracadabra
+        url: https://app.abracadabra.money/
+      - name: Zeru
+        url: https://testnet.zeru.finance/
+      - name: Curvance
+        url: https://app.curvance.com/
+      - name: Dirac Finance
+        url: https://bartio.dirac.finance/
+    staking_yield:
+      - name: Infrared Finance
+        url: https://infrared.finance/
+      - name: Kodiak (xKDK)
+        url: https://app.kodiak.finance/
+      - name: YEET Staking
+        url: https://bartio.yeetit.xyz/stake
+      - name: Origami Finance
+        url: https://bartio.origami.finance/
+      - name: IVX
+        url: https://bartio.ivx.fi/earn
+      - name: Moby Options
+        url: https://app.moby.trade/
+      - name: Junky Ursas
+        url: https://betabersion.junkyursas.com/
+    nft_mints:
+      - name: Honey Jar
+        url: https://faucet.0xhoneyjar.xyz/ooga-v2
+      - name: Kingdomly
+        url: https://www.kingdomly.app/
+      - name: Binance Web3 Wallet NFT
+        url: https://binancew3w.berachain.com/
+    bridges:
+      - name: Berachain Bridge (LayerZero)
+        url: https://bridge.berachain.com/
+    quest_platforms:
+      - name: Layer3 Chronicles
+        url: https://app.layer3.xyz/quests/
+      - name: Galxe
+        url: https://app.galxe.com/quest/Berachain
+      - name: Intract
+        url: https://www.intract.io/
+      - name: Honey Jar Quests
+        url: https://faucet.0xhoneyjar.xyz/quests
+    games:
+      - name: Fareplay
+        url: https://app.fareplay.io/
+      - name: BeraPoker
+        url: https://app.berapoker.com/
+      - name: Boodha AI
+        url: https://boodha.ai/en/
+    other:
+      - name: BeraVote (DAO)
+        url: https://beravote.com/
+      - name: StakeStone Pre-Deposit
+        url: https://app.stakestone.io/u/vault/detail/bera
+      - name: Lombard Pre-Deposit
+        url: https://www.lombard.finance/berachain/
+
+  - name: Somnia
+    network: testnet
+    chain_id: 50312
+    rpc: https://api.infra.testnet.somnia.network/
+    symbol: STT
+    explorer: https://shannon-explorer.somnia.network/
+    total_activities: 12
+    note: Smaller ecosystem. Mainnet already live. Testnet is developer-focused.
+    faucets:
+      - name: Official Testnet Hub
+        url: https://testnet.somnia.network/
+        cooldown_hours: 24
+      - name: Google Cloud Faucet
+        url: https://cloud.google.com/application/web3/faucet/somnia/shannon
+        cooldown_hours: 24
+      - name: Stakely Faucet
+        url: https://stakely.io/faucet/somnia-testnet-stt
+        cooldown_hours: 24
+      - name: Thirdweb Faucet
+        url: https://thirdweb.com/somnia-shannon-testnet
+        cooldown_hours: 24
+    staking:
+      - name: Somnia Staking Dashboard
+        url: https://staking.testnet.somnia.network/
+        type: direct_staking_delegation
+      - name: Somnia Mainnet Staking
+        url: https://staking.somnia.network/
+        type: mainnet_staking
+    dex_swaps:
+      - name: Relay Bridge Swap
+        url: https://relay.link/bridge
+      - name: Stargate Finance
+        url: https://stargate.finance/
+    bridges:
+      - name: Relay Bridge
+        url: https://relay.link/bridge
+      - name: Stargate (LayerZero)
+        url: https://stargate.finance/
+    quest_platforms:
+      - name: Somnia Quest Portal
+        url: https://quest.somnia.network/
+      - name: Somnia Galxe
+        url: https://app.galxe.com/somnia

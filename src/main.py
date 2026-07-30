@@ -2,7 +2,7 @@ import argparse
 import json
 import sys
 
-from src.config_manager import load_env
+from src.config_manager import load_env, load_yaml
 from src.cryptorank_client import CryptoRankClient
 from src.currency_monitor import CurrencyMonitor
 from src.logger import ActivityLogger
@@ -11,6 +11,7 @@ from src.task_scheduler import TaskScheduler
 from src.tge_monitor import TGEMonitor
 from src.wallet_manager import WalletManager
 from src.wallet_setup import generate_wallet, import_mnemonic
+from src.yield_scanner import YieldScanner
 
 
 WARNING = """
@@ -50,6 +51,8 @@ def main() -> None:
         help="Symbols to monitor.",
     )
     parser.add_argument("--market", action="store_true", help="Show global market snapshot.")
+    parser.add_argument("--yield-scan", action="store_true", help="Scan DeFi yields and show ROI.")
+    parser.add_argument("--activities", action="store_true", help="List all testnet farming activities.")
     parser.add_argument("--run-tasks", action="store_true", help="Execute the task loop.")
     parser.add_argument("--check-tge", action="store_true", help="Check for TGE/unlock events.")
     parser.add_argument(
@@ -64,6 +67,7 @@ def main() -> None:
     )
     args = parser.parse_args()
 
+    # --- Wallet setup commands (no network needed) ---
     if args.generate_wallet:
         print(WARNING)
         try:
@@ -77,12 +81,11 @@ def main() -> None:
         print(WARNING)
         lines = []
         try:
-            import sys as _sys
-            raw = _sys.stdin.read().strip()
+            raw = sys.stdin.read().strip()
             if not raw:
                 print("Paste your 12-word mnemonic phrase below.")
                 print("Type it and press Ctrl+D (Linux/Mac) or Ctrl+Z (Windows) when done.")
-                raw = _sys.stdin.read().strip()
+                raw = sys.stdin.read().strip()
             lines = raw.split()
         except (KeyboardInterrupt, EOFError):
             print("\nAborted.")
@@ -94,7 +97,9 @@ def main() -> None:
         import_mnemonic(mnemonic, args.import_mnemonic)
         return
 
-    client = CryptoRankClient()
+    # --- Market data commands ---
+    needs_key = any([args.market, args.refresh, bool(args.currency_symbols), args.check_tge])
+    client = CryptoRankClient() if needs_key else None
 
     if args.market:
         snapshot = client.get_global_snapshot()
@@ -116,6 +121,68 @@ def main() -> None:
         for a in alerts:
             print(f"ALERT: {a}")
 
+    # --- Yield scanner ---
+    if args.yield_scan:
+        scanner = YieldScanner()
+        pools = scanner.scan()
+        if not pools:
+            print("Could not fetch yield data. Check network.")
+        else:
+            print(f"{'Protocol':<32} {'Asset':<10} {'APY %':>8} {'TVL':>16}  {'6h ROI/$1000':>15} {'30d ROI/$1000':>15}")
+            print("-" * 115)
+            total = 0.0
+            for p in pools:
+                roi = scanner.calculate_roi(p["apy"])
+                print(
+                    f"{p['label']:<32} "
+                    f"{p['asset']:<10} "
+                    f"{p['apy']:>7.2f}% "
+                    f"${p['tvl']:>14,.0f}  "
+                    f"${roi['roi_6h_usd']:>13.4f}  "
+                    f"${roi['roi_30d_usd']:>13.2f}"
+                )
+                total += p["tvl"]
+            print("-" * 115)
+            print(f"{'Total TVL tracked':<32} {'':<10} {'':>8} ${total:>14,.0f}")
+            print()
+            print("ROI formula: amount * (APY / 100 / 365 / 24) * hours")
+            print("Amount: $1000. 6h = 0.25 days. 30d = 30 days.")
+            print("APY values are live from DefiLlama. Rates change daily.")
+            print()
+
+    # --- Testnet activities report ---
+    if args.activities:
+        data = load_yaml("config/testnet_activities.yaml")
+        projects = data.get("projects", [])
+        total = 0
+        for proj in projects:
+            name = proj["name"]
+            count = proj.get("total_activities", 0)
+            categories = [k for k in proj if k not in ("name", "network", "chain_id", "rpc", "symbol", "explorer", "note", "total_activities")]
+            print(f"\n=== {name} ({proj['symbol']}) — {count} activities ===")
+            if "note" in proj:
+                print(f"  Note: {proj['note']}")
+            for cat in categories:
+                items = proj[cat]
+                if not items:
+                    continue
+                print(f"  --- {cat.replace('_', ' ').title()} ({len(items)}) ---")
+                for item in items:
+                    url = item.get("url", "")
+                    cooldown = f" [{item['cooldown_hours']}h]" if "cooldown_hours" in item else ""
+                    note = f" — {item['note']}" if "note" in item else ""
+                    ticker = f" ({item['ticker']})" if "ticker" in item else ""
+                    print(f"    {item['name']}{ticker}{cooldown}{note}")
+                    if url:
+                        print(f"      {url}")
+            total += count
+        print(f"\nTotal unique activities across all projects: {total}")
+        print()
+        print("ROI context: Testnet tokens have $0 market value.")
+        print("The only payoff is a speculative airdrop at TGE (3-24 months).")
+        print("Use --yield-scan for real mainnet DeFi yield projections.")
+
+    # --- Task execution ---
     if args.run_tasks:
         logger = ActivityLogger()
         scheduler = TaskScheduler("ranked_watchlist.json", logger)
