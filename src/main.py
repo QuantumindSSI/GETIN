@@ -1,5 +1,6 @@
 import argparse
 import json
+import sys
 
 from src.config_manager import load_env
 from src.cryptorank_client import CryptoRankClient
@@ -9,12 +10,38 @@ from src.refresh_watchlist import refresh_watchlist
 from src.task_scheduler import TaskScheduler
 from src.tge_monitor import TGEMonitor
 from src.wallet_manager import WalletManager
+from src.wallet_setup import generate_wallet, import_mnemonic
+
+
+WARNING = """
+SECURITY WARNING
+This bot signs real on-chain transactions.
+Use a wallet that holds ZERO real assets (testnet tokens only).
+Never reuse a private key from a wallet that stores actual funds.
+Keys are stored locally and never sent to any third-party API.
+
+Press Ctrl+C now to abort, or the operation will continue.
+"""
 
 
 def main() -> None:
     """Parse arguments and run the requested agent tasks."""
     load_env()
     parser = argparse.ArgumentParser(description="DeepSeek Farming Agent")
+    parser.add_argument(
+        "--generate-wallet",
+        metavar="NAME",
+        nargs="?",
+        const="wallet_01",
+        help="Generate a fresh BIP39 wallet for farming.",
+    )
+    parser.add_argument(
+        "--import-mnemonic",
+        metavar="NAME",
+        nargs="?",
+        const="wallet_01",
+        help="Import a 12-word mnemonic and derive the private key.",
+    )
     parser.add_argument("--refresh", action="store_true", help="Refresh the ranked watchlist.")
     parser.add_argument(
         "--currency-symbols",
@@ -30,7 +57,42 @@ def main() -> None:
         default="https://rpc.ankr.com/eth",
         help="RPC endpoint for the wallet.",
     )
+    parser.add_argument(
+        "--wallet",
+        default="wallet_01",
+        help="Wallet name to use for task execution.",
+    )
     args = parser.parse_args()
+
+    if args.generate_wallet:
+        print(WARNING)
+        try:
+            generate_wallet(args.generate_wallet)
+        except KeyboardInterrupt:
+            print("\nAborted.")
+            sys.exit(0)
+        return
+
+    if args.import_mnemonic:
+        print(WARNING)
+        lines = []
+        try:
+            import sys as _sys
+            raw = _sys.stdin.read().strip()
+            if not raw:
+                print("Paste your 12-word mnemonic phrase below.")
+                print("Type it and press Ctrl+D (Linux/Mac) or Ctrl+Z (Windows) when done.")
+                raw = _sys.stdin.read().strip()
+            lines = raw.split()
+        except (KeyboardInterrupt, EOFError):
+            print("\nAborted.")
+            sys.exit(0)
+        mnemonic = " ".join(lines).strip().lower()
+        if not mnemonic:
+            print("No mnemonic entered. Aborted.")
+            sys.exit(1)
+        import_mnemonic(mnemonic, args.import_mnemonic)
+        return
 
     client = CryptoRankClient()
 
@@ -57,7 +119,7 @@ def main() -> None:
     if args.run_tasks:
         logger = ActivityLogger()
         scheduler = TaskScheduler("ranked_watchlist.json", logger)
-        wallet = WalletManager(args.rpc)
+        wallet = WalletManager(args.rpc, wallet_name=args.wallet)
         scheduler.run(wallet)
 
 
