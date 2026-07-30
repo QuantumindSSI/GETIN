@@ -13,6 +13,7 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 from src.config_manager import load_env
 from src.cryptorank_client import CryptoRankClient
 from src.currency_monitor import CurrencyMonitor
+from src.quest_engine import QuestTracker
 from src.reporter import subscribe_chat, unsubscribe_chat
 from src.subscriptions import (
     get_premium_price,
@@ -41,16 +42,22 @@ PROMO_TEXT = (
 )
 
 START_TEXT = (
-    "GETIN Farming Agent — your DeFi and airdrop companion.\n\n"
-    "Commands:\n"
+    "GETIN Farming Agent — earn from $0 with sweat equity.\n\n"
+    "Quest Commands:\n"
+    "/quests — All available quests\n"
+    "/quests beginner — $0 cost quests\n"
+    "/quest S1 — Step-by-step guide\n"
+    "/complete S1 — Mark done, earn rewards\n"
+    "/earnings — Your total + ROI projection\n\n"
+    "Market Commands:\n"
     "/yield — Live DeFi yields (ETH + SOL)\n"
     "/market — Global crypto market snapshot\n"
-    "/prices — BTC, ETH, SOL prices\n"
-    "/prices ADA DOGE — Any symbols\n"
-    "/activities — Testnet farming reference\n"
-    "/wallet — Generate an ETH farming wallet\n"
-    "/solana_wallet — Generate a Solana wallet\n"
-    "/subscribe — Get daily reports\n"
+    "/prices BTC ETH SOL — Live prices\n"
+    "/activities — 149 farming activities\n\n"
+    "Wallet & Setup:\n"
+    "/wallet — Generate ETH wallet\n"
+    "/solana_wallet — Generate Solana wallet\n"
+    "/subscribe — Daily reports (9am UTC)\n"
     "/upgrade — Premium subscription\n"
     "/help — This message"
 )
@@ -284,6 +291,139 @@ async def unsubscribe_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) ->
     await update.message.reply_text("Unsubscribed from daily reports.")
 
 
+async def quests_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Show available quests filtered by category."""
+    user = update.effective_user
+    tracker = QuestTracker(user.id)
+    category = context.args[0] if context.args else None
+    quests = tracker.get_quests(category)
+
+    if not quests:
+        await update.message.reply_text("No quests found. Try /quests beginner")
+        return
+
+    lines = ["<b>Available Quests</b>", ""]
+    cats = {}
+    for q in quests:
+        cats.setdefault(q["category"], []).append(q)
+
+    for cat, qlist in cats.items():
+        lines.append(f"<b>{cat.upper()} — {len(qlist)} quests</b>")
+        for q in qlist:
+            status = "DONE" if q["completed"] else f"${q['reward']} {q['reward_token']}"
+            lines.append(
+                f"  /quest {q['id']} | {q['title'][:40]} | {status} | {q['estimated_minutes']}min"
+            )
+        lines.append("")
+
+    lines.append("Usage: /quest S1 for details. /complete S1 to mark done.")
+    lines.append("Filter: /quests beginner | /quests intermediate | /quests advanced")
+    await update.message.reply_text("\n".join(lines), parse_mode=ParseMode.HTML)
+
+
+async def quest_detail_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Show step-by-step instructions for a specific quest."""
+    if not context.args:
+        await update.message.reply_text("Usage: /quest S1\nUse /quests to see available IDs.")
+        return
+
+    quest_id = context.args[0].upper()
+    user = update.effective_user
+    tracker = QuestTracker(user.id)
+    quests = tracker.get_quests()
+    quest = next((q for q in quests if q["id"] == quest_id), None)
+
+    if not quest:
+        await update.message.reply_text("Quest not found. Use /quests to list them.")
+        return
+
+    status = " COMPLETED" if quest["completed"] else ""
+    lines = [
+        f"<b>{quest['title']}</b>{status}",
+        f"Platform: {quest['platform']} | Difficulty: {quest['difficulty']}",
+        f"Reward: ${quest['reward']} {quest['reward_token']}",
+        f"Time: ~{quest['estimated_minutes']} minutes | Cost: ${quest['cost']}",
+        "",
+        f"<b>Steps:</b>",
+    ]
+    for i, step in enumerate(quest["steps"], 1):
+        lines.append(f"  {i}. {step}")
+    lines.append("")
+    lines.append(f"URL: {quest['url']}")
+    lines.append(f"Requires: {', '.join(quest['requires'])}")
+    lines.append("")
+    if not quest["completed"]:
+        lines.append("Complete this quest? Send: /complete " + quest_id)
+    else:
+        lines.append("Quest completed. Check your earnings: /earnings")
+
+    await update.message.reply_text("\n".join(lines), parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+
+
+async def complete_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Mark a quest as completed and add its reward to earnings."""
+    if not context.args:
+        await update.message.reply_text("Usage: /complete S1")
+        return
+
+    quest_id = context.args[0].upper()
+    user = update.effective_user
+    tracker = QuestTracker(user.id)
+    result = tracker.complete_quest(quest_id)
+
+    if not result["ok"]:
+        await update.message.reply_text(result["error"])
+        return
+
+    await update.message.reply_text(
+        f"Quest completed: {result['quest']}\n"
+        f"+${result['reward']} {result['token']}\n"
+        f"Total earned: ${result['total_earned']:.2f}\n\n"
+        f"/quests for more. /earnings for full report."
+    )
+
+
+async def earnings_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Display the user's accumulated quest earnings and 6h/30d projections."""
+    user = update.effective_user
+    tracker = QuestTracker(user.id)
+    data = tracker.get_earnings()
+
+    if data["quests_completed"] == 0:
+        await update.message.reply_text(
+            "No earnings yet. Start with /quests beginner\n"
+            "Every quest is $0 cost — just sweat equity."
+        )
+        return
+
+    lines = [
+        "<b>Your Sweat Equity Earnings</b>",
+        f"Quests completed: {data['quests_completed']}",
+        f"Total earned: ${data['total_usd']:.2f}",
+        "",
+        "<b>By token:</b>",
+    ]
+    for token, amount in sorted(data["by_token"].items(), key=lambda x: -x[1]):
+        lines.append(f"  {token}: ${amount:.2f}")
+
+    lines.append("")
+    lines.append("<b>Recent completions:</b>")
+    for q in data["quests"][-5:]:
+        lines.append(f"  {q['id']} — {q['title']} — +${q['reward']} {q['token']}")
+
+    # ROI projection if deployed
+    if data["total_usd"] >= 5.0:
+        from src.yield_scanner import YieldScanner
+        scanner = YieldScanner()
+        roi = scanner.calculate_roi(7.83, data["total_usd"])
+        lines.append("")
+        lines.append("<b>If deployed at 7.83% APY (Orca SOL/USDC):</b>")
+        lines.append(f"  6h return: ${roi['roi_6h_usd']:.4f}")
+        lines.append(f"  30d return: ${roi['roi_30d_usd']:.2f}")
+
+    await update.message.reply_text("\n".join(lines), parse_mode=ParseMode.HTML)
+
+
 def build_app() -> Application:
     """Create and configure the Telegram bot application."""
     app = Application.builder().token(BOT_TOKEN).build()
@@ -300,6 +440,10 @@ def build_app() -> Application:
     app.add_handler(CommandHandler("set_premium", set_premium_cmd))
     app.add_handler(CommandHandler("subscribe", subscribe_cmd))
     app.add_handler(CommandHandler("unsubscribe", unsubscribe_cmd))
+    app.add_handler(CommandHandler("quests", quests_cmd))
+    app.add_handler(CommandHandler("quest", quest_detail_cmd))
+    app.add_handler(CommandHandler("complete", complete_cmd))
+    app.add_handler(CommandHandler("earnings", earnings_cmd))
 
     return app
 

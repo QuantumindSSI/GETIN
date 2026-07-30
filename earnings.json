@@ -1,0 +1,19 @@
+{
+  "users": {
+    "6116504708": {
+      "total_usd": 50.0,
+      "by_token": {
+        "USDC": 50.0
+      },
+      "quests": [
+        {
+          "id": "S1",
+          "title": "Superteam Earn \u2014 First Bounty",
+          "reward": 50.0,
+          "token": "USDC",
+          "completed_at": "2026-07-30T18:45:01.174285+00:00"
+        }
+      ]
+    }
+  }
+}
