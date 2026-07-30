@@ -1,0 +1,17 @@
+1/ I just explored the brain drain wall from zero to fully functional in under 15 minutes. Here is the complete guide. No prior experience needed. 🧵
+
+2/ First, what is the brain drain wall? It is a new way to earn crypto rewards by completing structured on-chain and off-chain tasks. Think of it as getting paid to learn.
+
+3/ Getting started costs exactly $0. You need: a wallet (Phantom for Solana, MetaMask for EVM), an internet connection, and 10 minutes of focused time. That is it.
+
+4/ Step 1: Create a fresh wallet specifically for this. Never use your main wallet. Generate one with GETIN bot: /wallet for EVM, /solana_wallet for Solana.
+
+5/ Step 2: Visit the official the brain drain wall platform. Connect your wallet. Do not use any link someone DMed you. Verify the URL yourself in the official Discord or Twitter bio.
+
+6/ Step 3: Complete your first quest. Start with the easiest one labeled 'Free' or '$0 cost'. These are 5-minute tasks that teach you the platform basics.
+
+7/ Step 4: Repeat daily. The consistency matters more than the complexity. A 5-minute quest every day for 30 days beats one hour once a week. Streak bonuses multiply your rewards.
+
+8/ The math: 1 quest/day × 30 days = 30 completions. Average reward $2-5/quest = $60-150/month. From $0. With 10 minutes per day. Start now.
+
+Subscribe to @Yieldabot for automated quest completion. /auto_quest to start.
