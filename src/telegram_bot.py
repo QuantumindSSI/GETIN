@@ -1,6 +1,7 @@
 import asyncio
 import json
 import os
+import signal
 import textwrap
 from datetime import datetime, timezone
 from typing import Any, Dict, List
@@ -311,15 +312,38 @@ def run_bot() -> None:
 
     app = build_app()
 
-    bot = app.bot
-    from src.reporter import start_scheduler as _start_reporter
-    _start_reporter(bot)
+    from src.reporter import install_scheduler
+    install_scheduler(app)
 
     print(f"GETIN Telegram bot starting...")
     print(f"Token loaded: {'yes' if BOT_TOKEN else 'no'}")
     print(f"CryptoRank key loaded: {'yes' if CR_API_KEY else 'no'}")
     print(f"Auto-reporter scheduler active")
-    app.run_polling(allowed_updates=Update.ALL_TYPES)
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        loop.run_until_complete(_run(app))
+    except KeyboardInterrupt:
+        print("\nShutting down...")
+    finally:
+        loop.close()
+
+
+async def _run(app: Application) -> None:
+    """Initialize and run the bot with graceful shutdown."""
+    await app.initialize()
+    await app.start()
+    await app.updater.start_polling(allowed_updates=Update.ALL_TYPES)
+    print("Bot is running. Press Ctrl+C to stop.")
+    stop_event = asyncio.Event()
+    loop = asyncio.get_running_loop()
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        loop.add_signal_handler(sig, stop_event.set)
+    await stop_event.wait()
+    await app.updater.stop()
+    await app.stop()
+    await app.shutdown()
 
 
 if __name__ == "__main__":
