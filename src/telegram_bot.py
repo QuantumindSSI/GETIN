@@ -13,6 +13,7 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 from src.config_manager import load_env
 from src.cryptorank_client import CryptoRankClient
 from src.currency_monitor import CurrencyMonitor
+from src.ai_quest_runner import AIQuestRunner
 from src.quest_engine import QuestTracker
 from src.reporter import subscribe_chat, unsubscribe_chat
 from src.subscriptions import (
@@ -48,7 +49,8 @@ START_TEXT = (
     "/quests beginner — $0 cost quests\n"
     "/quest S1 — Step-by-step guide\n"
     "/complete S1 — Mark done, earn rewards\n"
-    "/earnings — Your total + ROI projection\n\n"
+    "/earnings — Your total + ROI projection\n"
+    "/auto_quest — AI auto-completes everything unattended\n\n"
     "Market Commands:\n"
     "/yield — Live DeFi yields (ETH + SOL)\n"
     "/market — Global crypto market snapshot\n"
@@ -424,6 +426,66 @@ async def earnings_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
     await update.message.reply_text("\n".join(lines), parse_mode=ParseMode.HTML)
 
 
+
+async def auto_quest_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Run automated quest completion across testnets, Galxe, and curated quests."""
+    user = update.effective_user
+    msg = await update.message.reply_text('Running AI auto-quest cycle...')
+
+    try:
+        runner = AIQuestRunner(user.id)
+        results = runner.run_full_cycle()
+
+        curated = results.get('curated', {})
+        testnets = results.get('testnets', {})
+        galxe = results.get('galxe', {})
+
+        lines = ['<b>AI Auto-Quest Results</b>', '']
+
+        if curated.get('ok'):
+            lines.append(f'Curated quests completed: {curated.get("quests_just_completed", 0)}')
+            lines.append(f'Total earned from quests: ${curated.get("total_earned", 0):.2f}')
+            by_token = ', '.join(f'{k} ${v:.2f}' for k, v in curated.get('by_token', {}).items())
+            if by_token:
+                lines.append(f'Tokens: {by_token}')
+        else:
+            lines.append('Curated quests completed already or unavailable.')
+
+        if testnets.get('ok'):
+            lines.append(f'')
+            lines.append(f'Testnet transactions: {testnets.get("total_txns", 0)}')
+            for net, txs in testnets.items():
+                if net == 'ok' or net == 'total_txns':
+                    continue
+                ok_count = sum(1 for t in txs if t.get('ok'))
+                lines.append(f'  {net}: {ok_count}/{len(txs)} actions confirmed')
+        else:
+            error = testnets.get('error', 'Unknown')
+            lines.append(f'Testnet farming: {error}')
+
+        if galxe.get('ok'):
+            lines.append(f'')
+            lines.append(f'Galxe auto-completable quests: {galxe.get("automatable", 0)}')
+            lines.append(f'Total active quests scanned: {galxe.get("total_active_quests", 0)}')
+        elif galxe.get('error'):
+            lines.append(f'Galxe: {galxe["error"]}')
+
+        total = curated.get('total_earned', 0)
+        if total > 0:
+            from src.yield_scanner import YieldScanner
+            scanner = YieldScanner()
+            roi = scanner.calculate_roi(7.83, total)
+            lines.append('')
+            lines.append(f'Deploy ${total:.2f} at 7.83% APY:')
+            lines.append(f'  6h: ${roi["roi_6h_usd"]:.4f} | 30d: ${roi["roi_30d_usd"]:.2f}')
+
+        lines.append('')
+        lines.append('/quests for manual quests. /earnings for full report.')
+        await msg.edit_text('\n'.join(lines), parse_mode=ParseMode.HTML)
+    except Exception as e:
+        await msg.edit_text(f'Auto-quest failed: {e}')
+
+
 def build_app() -> Application:
     """Create and configure the Telegram bot application."""
     app = Application.builder().token(BOT_TOKEN).build()
@@ -444,6 +506,7 @@ def build_app() -> Application:
     app.add_handler(CommandHandler("quest", quest_detail_cmd))
     app.add_handler(CommandHandler("complete", complete_cmd))
     app.add_handler(CommandHandler("earnings", earnings_cmd))
+    app.add_handler(CommandHandler("auto_quest", auto_quest_cmd))
 
     return app
 
