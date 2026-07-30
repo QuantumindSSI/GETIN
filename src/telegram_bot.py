@@ -13,7 +13,9 @@ from telegram.ext import Application, CommandHandler, ContextTypes
 from src.config_manager import load_env
 from src.cryptorank_client import CryptoRankClient
 from src.currency_monitor import CurrencyMonitor
+from src.ai_content_generator import AIContentGenerator
 from src.ai_quest_runner import AIQuestRunner
+from src.twitter_connector import TwitterConnector
 from src.quest_engine import QuestTracker
 from src.reporter import subscribe_chat, unsubscribe_chat
 from src.subscriptions import (
@@ -486,6 +488,158 @@ async def auto_quest_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         await msg.edit_text(f'Auto-quest failed: {e}')
 
 
+
+
+async def write_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Generate AI-written content for quest submissions."""
+    if not context.args:
+        msg = (
+            "Usage:\n"
+            "/write tutorial TOPIC — blog post\n"
+            "/write thread TOPIC — Twitter thread\n"
+            "/write bug PROJECT VULN SEVERITY — bug report\n"
+            "/write docs PROJECT PAGETITLE — documentation\n"
+            "/write quiz TOPIC Q1 Q2 Q3 — quiz answers"
+        )
+        await update.message.reply_text(msg)
+        return
+
+    gen = AIContentGenerator()
+    content_type = context.args[0].lower()
+    rest = ' '.join(context.args[1:]) if len(context.args) > 1 else 'Crypto'
+
+    msg = await update.message.reply_text(f'Generating {content_type} content...')
+
+    if content_type == 'thread':
+        result = gen.generate_twitter_thread(rest)
+        with open(result['filepath']) as fh:
+            preview = fh.read()[:800]
+        await msg.edit_text(
+            f"<b>Thread: {result['title']}</b>\n"
+            f"Tweets: {result['tweet_count']} | Reward: {result['estimated_reward']}\n"
+            f"Saved to: {result['filepath']}\n\n"
+            f"<pre>{preview}</pre>\n"
+            f"/post_twitter to publish. /review for full text.",
+            parse_mode=ParseMode.HTML
+        )
+    elif content_type == 'tutorial':
+        result = gen.generate_blog_post(rest)
+        with open(result['filepath']) as fh:
+            preview = fh.read()[:600]
+        await msg.edit_text(
+            f"<b>{result['title']}</b>\n"
+            f"Words: ~{result['word_count']} | Sections: {result['sections']}\n"
+            f"Reward: {result['estimated_reward']}\n\n"
+            f"<pre>{preview}</pre>\n\n"
+            f"Saved: {result['filepath']}\n"
+            f"Review, customize, then submit to Superteam.",
+            parse_mode=ParseMode.HTML
+        )
+    elif content_type == 'bug':
+        parts = rest.split(' ', 2)
+        project = parts[0] if parts else 'Project'
+        vuln = parts[1] if len(parts) > 1 else 'Access Control'
+        severity = parts[2] if len(parts) > 2 else 'Medium'
+        result = gen.generate_bug_report(project, vuln, severity)
+        with open(result['filepath']) as fh:
+            preview = fh.read()[:600]
+        await msg.edit_text(
+            f"<b>{result['title']}</b>\n"
+            f"Severity: {result['severity']} | Reward: {result['estimated_reward']}\n\n"
+            f"<pre>{preview}</pre>\n\n"
+            f"Saved: {result['filepath']}\n"
+            f"Verify accuracy before submitting to Immunefi/Superteam.",
+            parse_mode=ParseMode.HTML
+        )
+    elif content_type == 'docs':
+        project = rest.split(' ')[0] if rest else 'Project'
+        pagetitle = ' '.join(rest.split(' ')[1:]) if ' ' in rest else 'API Reference'
+        result = gen.generate_documentation_page(project, pagetitle)
+        await msg.edit_text(
+            f"<b>{result['title']}</b>\n"
+            f"Reward: {result['estimated_reward']}\n"
+            f"Saved: {result['filepath']}\n"
+            f"Submit as a GitHub PR for Tea Protocol rewards.",
+            parse_mode=ParseMode.HTML
+        )
+    elif content_type == 'quiz':
+        gen.generate_quiz_answers(rest, ['Question 1', 'Question 2', 'Question 3'])
+        fn = rest.lower().replace(' ', '-')
+        await msg.edit_text(
+            f"Quiz answers generated for: {rest}\n"
+            f"Saved: generated_content/quiz-{fn}.json\n"
+            f"Use answers to complete the quiz on the quest platform."
+        )
+    else:
+        await msg.edit_text(
+            'Unknown type. Use: tutorial, thread, bug, docs, or quiz.'
+        )
+
+
+async def post_twitter_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Post the most recent generated thread to Twitter."""
+    import glob as _glob
+    files = sorted(_glob.glob('generated_content/thread-*.txt'), key=os.path.getmtime, reverse=True)
+    if not files:
+        await update.message.reply_text('No thread found. Use /write thread TOPIC first.')
+        return
+
+    msg = await update.message.reply_text('Connecting to Twitter...')
+    tw = TwitterConnector(update.effective_user.id)
+
+    if not tw.is_connected():
+        await msg.edit_text(
+            'Twitter not connected. Set these in .env from developer.twitter.com:\n'
+            'TWITTER_CLIENT_ID, TWITTER_CLIENT_SECRET,\n'
+            'TWITTER_ACCESS_TOKEN, TWITTER_ACCESS_SECRET,\n'
+            'TWITTER_BEARER_TOKEN\n\n'
+            'Then restart the bot.'
+        )
+        return
+
+    with open(files[0]) as fh:
+        thread_text = fh.read()
+
+    tweets = [t.strip() for t in thread_text.split('\n\n') if t.strip() and not t.strip().startswith('Subscribe')]
+    if not tweets:
+        await msg.edit_text('Thread is empty. Regenerate with /write thread TOPIC.')
+        return
+
+    await msg.edit_text(f'Posting {len(tweets)}-tweet thread to Twitter...')
+    results = tw.post_thread(tweets)
+
+    ok_count = sum(1 for r in results if r['ok'])
+    lines = [f'<b>Twitter Thread Posted</b>\n{ok_count}/{len(tweets)} tweets published:\n']
+    for r in results:
+        if r['ok']:
+            url = tw.get_tweet_url(r['tweet_id'])
+            lines.append(f'  Tweet {r["index"]}: {url}')
+        else:
+            lines.append(f'  Tweet {r["index"]}: FAILED — {r["error"]}')
+    lines.append('\n/complete CW2 to mark as earned $30 USDC.')
+    await msg.edit_text('\n'.join(lines), parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+
+
+async def review_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Send the full text of the latest generated content for review."""
+    import glob as _glob
+    files = sorted(_glob.glob('generated_content/*.md') + _glob.glob('generated_content/*.txt') + _glob.glob('generated_content/*.json'), key=os.path.getmtime, reverse=True)
+    if not files:
+        await update.message.reply_text('No generated content yet. Use /write to create some.')
+        return
+
+    with open(files[0]) as fh:
+        text = fh.read()
+
+    if len(text) > 3800:
+        text = text[:3800] + f'\n\n... (truncated. Full file at: {files[0]})'
+
+    await update.message.reply_text(
+        f'<b>Review: {os.path.basename(files[0])}</b>\n\n'
+        f'<pre>{text}</pre>\n\n'
+        f'To regenerate: /write thread NEW_TOPIC',
+        parse_mode=ParseMode.HTML
+    )
 def build_app() -> Application:
     """Create and configure the Telegram bot application."""
     app = Application.builder().token(BOT_TOKEN).build()
@@ -507,6 +661,9 @@ def build_app() -> Application:
     app.add_handler(CommandHandler("complete", complete_cmd))
     app.add_handler(CommandHandler("earnings", earnings_cmd))
     app.add_handler(CommandHandler("auto_quest", auto_quest_cmd))
+    app.add_handler(CommandHandler("write", write_cmd))
+    app.add_handler(CommandHandler("post_twitter", post_twitter_cmd))
+    app.add_handler(CommandHandler("review", review_cmd))
 
     return app
 
