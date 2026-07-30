@@ -15,6 +15,14 @@ TARGET_SLUGS = [
     ("Curve 3pool",      "curve-dex",    "Ethereum", "DAI-USDC-USDT"),
     ("Yearn USDC",       "yearn-finance","Ethereum", "USDC"),
     ("Yearn ETH",        "yearn-finance","Ethereum", "WETH"),
+    # Solana DeFi
+    ("JitoSOL (Solana)",      "jito-liquid-staking",    "Solana", "JITOSOL"),
+    ("Marinade mSOL (Solana)","marinade-liquid-staking","Solana", "MSOL"),
+    ("Kamino Lend SOL",       "kamino-lend",            "Solana", "SOL"),
+    ("Kamino Lend USDC",      "kamino-lend",            "Solana", "USDC"),
+    ("Orca SOL/USDC LP",      "orca-dex",               "Solana", "SOL-USDC"),
+    ("Drift dSOL (Solana)",   "drift-staked-sol",       "Solana", "DSOL"),
+    ("Marginfi LST (Solana)", "marginfi-lst",           "Solana", "LST"),
 ]
 
 

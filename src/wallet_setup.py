@@ -5,6 +5,7 @@ from typing import Optional
 
 from eth_account import Account
 from eth_account.signers.local import LocalAccount
+from solders.keypair import Keypair
 
 
 Account.enable_unaudited_hdwallet_features()
@@ -73,6 +74,37 @@ def import_mnemonic(mnemonic: str, name: str = "wallet_01") -> str:
     print(f"Address: {acct.address}")
     print(f"Private key stored at: {env_path}")
     return acct.address
+
+
+def generate_solana_wallet(name: str = "solana_01") -> str:
+    """Create a fresh Solana keypair and save the private key."""
+    kp = Keypair()
+    secret = kp.secret()  # bytes[64]
+
+    _ensure_wallet_dir()
+    env_path = os.path.join(WALLET_DIR, f"{name}.env")
+    meta_path = os.path.join(WALLET_DIR, f"{name}.json")
+
+    with open(env_path, "w", encoding="utf-8") as fh:
+        fh.write(f"SOLANA_PRIVATE_KEY={secret.hex()}\n")
+    os.chmod(env_path, 0o600)
+
+    meta = {
+        "name": name,
+        "address": str(kp.pubkey()),
+        "chain": "solana",
+        "created_at": datetime.now(timezone.utc).isoformat(),
+    }
+    with open(meta_path, "w", encoding="utf-8") as fh:
+        json.dump(meta, fh, indent=2)
+
+    print(f"Solana wallet generated: {name}")
+    print(f"Address: {kp.pubkey()}")
+    print(f"Private key (64 bytes hex) saved to: {env_path}")
+    print()
+    print("Import this key into Phantom or Solflare:")
+    print("Settings → Add/Connect Wallet → Import Private Key → paste hex")
+    return str(kp.pubkey())
 
 
 def load_account(private_key: Optional[str] = None, name: str = "wallet_01") -> LocalAccount:

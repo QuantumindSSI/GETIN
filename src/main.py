@@ -10,7 +10,7 @@ from src.refresh_watchlist import refresh_watchlist
 from src.task_scheduler import TaskScheduler
 from src.tge_monitor import TGEMonitor
 from src.wallet_manager import WalletManager
-from src.wallet_setup import generate_wallet, import_mnemonic
+from src.wallet_setup import generate_wallet, generate_solana_wallet, import_mnemonic
 from src.yield_scanner import YieldScanner
 
 
@@ -42,6 +42,13 @@ def main() -> None:
         nargs="?",
         const="wallet_01",
         help="Import a 12-word mnemonic and derive the private key.",
+    )
+    parser.add_argument(
+        "--generate-solana-wallet",
+        metavar="NAME",
+        nargs="?",
+        const="solana_01",
+        help="Generate a fresh Solana keypair for Phantom or Solflare.",
     )
     parser.add_argument("--refresh", action="store_true", help="Refresh the ranked watchlist.")
     parser.add_argument(
@@ -95,6 +102,11 @@ def main() -> None:
             print("No mnemonic entered. Aborted.")
             sys.exit(1)
         import_mnemonic(mnemonic, args.import_mnemonic)
+        return
+
+    if args.generate_solana_wallet:
+        print(WARNING)
+        generate_solana_wallet(args.generate_solana_wallet)
         return
 
     # --- Market data commands ---
@@ -158,7 +170,7 @@ def main() -> None:
         for proj in projects:
             name = proj["name"]
             count = proj.get("total_activities", 0)
-            categories = [k for k in proj if k not in ("name", "network", "chain_id", "rpc", "symbol", "explorer", "note", "total_activities")]
+            categories = [k for k in proj if k not in ("name", "network", "chain_id", "rpc", "symbol", "explorer", "note", "total_activities", "strategy", "zero_capital_workflow")]
             print(f"\n=== {name} ({proj['symbol']}) — {count} activities ===")
             if "note" in proj:
                 print(f"  Note: {proj['note']}")
@@ -168,13 +180,23 @@ def main() -> None:
                     continue
                 print(f"  --- {cat.replace('_', ' ').title()} ({len(items)}) ---")
                 for item in items:
+                    if not isinstance(item, dict):
+                        print(f"    {item}")
+                        continue
                     url = item.get("url", "")
                     cooldown = f" [{item['cooldown_hours']}h]" if "cooldown_hours" in item else ""
-                    note = f" — {item['note']}" if "note" in item else ""
+                    nnote = f" — {item['note']}" if "note" in item else ""
                     ticker = f" ({item['ticker']})" if "ticker" in item else ""
-                    print(f"    {item['name']}{ticker}{cooldown}{note}")
+                    display_name = item.get("name") or item.get("title") or str(item)
+                    print(f"    {display_name}{ticker}{cooldown}{nnote}")
                     if url:
                         print(f"      {url}")
+            if "zero_capital_workflow" in proj:
+                print(f"  --- Zero-Capital Strategy ---")
+                for step in proj["zero_capital_workflow"]:
+                    if isinstance(step, dict):
+                        print(f"    Step {step.get('step', '?')}: {step.get('title', '')}")
+                        print(f"      {step.get('description', '')}")
             total += count
         print(f"\nTotal unique activities across all projects: {total}")
         print()

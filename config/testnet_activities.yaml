@@ -380,3 +380,85 @@ projects:
         url: https://quest.somnia.network/
       - name: Somnia Galxe
         url: https://app.galxe.com/somnia
+
+  - name: Solana
+    network: devnet
+    rpc: https://api.devnet.solana.com
+    symbol: SOL
+    explorer: https://explorer.solana.com/?cluster=devnet
+    total_activities: 18
+    strategy: zero_capital
+    zero_capital_workflow:
+      - step: 1
+        title: Create a Phantom or Solflare wallet
+        description: Download the browser extension or mobile app. Write down the 12-word seed phrase.
+      - step: 2
+        title: Fund with Devnet SOL
+        description: Visit solfaucet.com or faucet.solana.com. Request free Devnet SOL. Switch wallet network to Devnet.
+      - step: 3
+        title: Practice on Devnet protocols
+        description: Use Devnet SOL to swap, stake, and provide liquidity on test versions of Orca, Raydium, and Kamino.
+      - step: 4
+        title: Earn mainnet tokens via micro-tasks
+        description: Complete quests on Layer3, Zealy, and Galxe for Solana ecosystem projects. Earn real tokens with zero capital.
+      - step: 5
+        title: Deploy earnings into yield pools
+        description: Once you accumulate $5-$10 in real tokens, deposit 50% into SOL and 50% into JitoSOL on Kamino Finance or an Orca Whirlpool to earn real APY.
+    faucets:
+      - name: Solfaucet.com
+        url: https://solfaucet.com/
+        cooldown_hours: 24
+        note: Devnet SOL — free, no mainnet value
+      - name: Faucet.solana.com
+        url: https://faucet.solana.com/
+        cooldown_hours: 24
+        note: Official Solana devnet faucet
+      - name: QuickNode Solana Faucet
+        url: https://faucet.quicknode.com/solana/devnet
+        cooldown_hours: 12
+    incentivised_testnets:
+      - name: Jito Restaking (devnet)
+        url: https://www.jito.network/
+        note: Stake devnet SOL for potential airdrop allocation
+      - name: Drift Protocol v2 (devnet)
+        url: https://drift.trade/
+        note: Trade perps with devnet funds
+      - name: Marginfi (devnet)
+        url: https://www.marginfi.com/
+        note: Lend/borrow devnet SOL
+    micro_task_platforms:
+      - name: Layer3
+        url: https://app.layer3.xyz/
+        note: Solana ecosystem quests — earn real tokens for completing tasks
+      - name: Zealy
+        url: https://zealy.io/
+        note: Community sprints for Solana projects
+      - name: Galxe
+        url: https://app.galxe.com/
+        note: Solana campaign quests with OAT/NFT rewards
+      - name: Superteam Earn
+        url: https://earn.superteam.fun/
+        note: Bounties and micro-tasks for Solana ecosystem — paid in USDC
+    devnet_protocols:
+      - name: Orca (Devnet)
+        url: https://www.orca.so/
+        note: Practice swaps and LP deposits with devnet SOL
+      - name: Raydium (Devnet)
+        url: https://raydium.io/
+        note: AMM swaps and liquidity pools on devnet
+      - name: Kamino Lend (Devnet)
+        url: https://app.kamino.finance/
+        note: Practice lending and borrowing on devnet
+    mainnet_yield_deployment:
+      - name: Kamino Finance
+        url: https://app.kamino.finance/
+        note: Automated vaults — correlated SOL/JitoSOL strategy with ~5% APY
+      - name: Orca Whirlpools
+        url: https://www.orca.so/
+        note: Concentrated liquidity SOL/USDC pool — variable APY
+      - name: Marinade Finance
+        url: https://marinade.finance/
+        note: Liquid staking — stake SOL for mSOL at ~4.8% APY
+      - name: JitoSOL
+        url: https://www.jito.network/
+        note: Liquid staking with MEV rewards — ~5.1% APY
