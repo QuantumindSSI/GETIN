@@ -1,4 +1,5 @@
 import argparse
+import json
 
 from src.config_manager import load_env
 from src.cryptorank_client import CryptoRankClient
@@ -21,6 +22,7 @@ def main() -> None:
         default=[],
         help="Symbols to monitor.",
     )
+    parser.add_argument("--market", action="store_true", help="Show global market snapshot.")
     parser.add_argument("--run-tasks", action="store_true", help="Execute the task loop.")
     parser.add_argument("--check-tge", action="store_true", help="Check for TGE/unlock events.")
     parser.add_argument(
@@ -32,6 +34,10 @@ def main() -> None:
 
     client = CryptoRankClient()
 
+    if args.market:
+        snapshot = client.get_global_snapshot()
+        print(json.dumps(snapshot, indent=2))
+
     if args.refresh:
         refresh_watchlist(client)
         print("Watchlist refreshed.")
@@ -39,17 +45,14 @@ def main() -> None:
     if args.currency_symbols:
         monitor = CurrencyMonitor(client, args.currency_symbols)
         snapshots = monitor.check()
-        for snapshot in snapshots:
-            print(
-                f"{snapshot['symbol']}: ${snapshot['price_usd']} | "
-                f"MCap: ${snapshot['market_cap_usd']}"
-            )
+        for s in snapshots:
+            print(f"{s['symbol']}: ${s['price_usd']} | MCap: ${s['market_cap_usd']}")
 
     if args.check_tge:
         monitor = TGEMonitor(client)
         alerts = monitor.check()
-        for alert in alerts:
-            print(f"ALERT: {alert}")
+        for a in alerts:
+            print(f"ALERT: {a}")
 
     if args.run_tasks:
         logger = ActivityLogger()

@@ -46,7 +46,10 @@ class TGEMonitor:
             return []
         lowered = {p.lower() for p in projects}
         alerted = set(self._load_alerted())
-        unlocks = self.client.get_token_unlocks(limit=500)
+        try:
+            unlocks = self.client.get_token_unlocks(page=1)
+        except Exception:
+            return []
         new_alerts: List[str] = []
         for item in unlocks.get("data", []):
             raw_name = item.get("name") or item.get("project", {}).get("name", "")
