@@ -1,0 +1,28 @@
+services:
+  bot:
+    image: getin-bot:latest
+    container_name: getin-bot-prod
+    restart: always
+    environment:
+      - CRYPTORANK_API_KEY=${CRYPTORANK_API_KEY}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - TELEGRAM_OWNER_ID=${TELEGRAM_OWNER_ID}
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - getin_data:/app/persist
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: "256M"
+        reservations:
+          cpus: "0.25"
+          memory: "128M"
+
+volumes:
+  getin_data:

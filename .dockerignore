@@ -1,0 +1,14 @@
+venv/
+__pycache__/
+*.pyc
+.env
+*.jsonl
+ranked_watchlist.json
+last_run.json
+tge_alerted.json
+subscribers.json
+report_chats.json
+.git
+.gitignore
+README.md
+deploy/

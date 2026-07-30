@@ -1,0 +1,24 @@
+services:
+  bot:
+    build: .
+    container_name: getin-bot
+    restart: always
+    env_file:
+      - .env
+    environment:
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./wallets:/app/wallets
+      - ./subscribers.json:/app/subscribers.json
+      - ./report_chats.json:/app/report_chats.json
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "telegram_bot"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s

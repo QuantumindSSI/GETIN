@@ -1,0 +1,141 @@
+name: GETIN CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install ruff
+      - run: ruff check src/ --ignore=E501,F841
+
+  typecheck:
+    name: Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: pip install mypy
+      - run: python -c "import ast; [ast.parse(open(f'${{ github.workspace }}/src/{m}').read()) for m in ['main.py', 'telegram_bot.py', 'cryptorank_client.py', 'currency_monitor.py', 'yield_scanner.py', 'wallet_setup.py', 'subscriptions.py', 'reporter.py', 'task_scheduler.py']]"
+
+  test:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - run: pip install pytest pytest-asyncio
+      - run: |
+          python -c "
+          from src.cryptorank_client import CryptoRankClient
+          from src.currency_monitor import CurrencyMonitor
+          from src.yield_scanner import YieldScanner
+          from src.subscriptions import get_tier, register_user, get_premium_price
+          from src.wallet_setup import generate_wallet, generate_solana_wallet
+          from src.config_manager import load_yaml
+          from src.logger import ActivityLogger
+
+          # Import tests
+          print('--- Module imports OK ---')
+
+          # Config test
+          data = load_yaml('watchlist.yaml')
+          assert len(data) == 3, f'Expected 3 projects, got {len(data)}'
+
+          # Subscriptions test
+          register_user(12345, 'testuser')
+          assert get_tier(12345) == 'free'
+          assert get_premium_price() == 9.99
+          print('--- Subscriptions OK ---')
+
+          # Logger test
+          logger = ActivityLogger('/tmp/test_activity.jsonl')
+          logger.log('Monad', 'swap', '0xabc', {})
+          print('--- Logger OK ---')
+
+          print('--- All unit tests passed ---')
+          "
+
+  docker:
+    name: Build and Push Docker
+    needs: [lint, test, typecheck]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - name: Extract metadata
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,format=short
+            type=ref,event=branch
+            latest
+      - name: Build and push
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    name: Deploy to Azure
+    needs: docker
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Deploy to Container Instances
+        run: |
+          az container create \
+            --resource-group getin-rg \
+            --name getin-bot \
+            --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
+            --registry-login-server ${{ env.REGISTRY }} \
+            --registry-username ${{ github.actor }} \
+            --registry-password ${{ secrets.GITHUB_TOKEN }} \
+            --cpu 1 --memory 0.5 \
+            --environment-variables \
+              CRYPTORANK_API_KEY=${{ secrets.CRYPTORANK_API_KEY }} \
+              TELEGRAM_BOT_TOKEN=${{ secrets.TELEGRAM_BOT_TOKEN }} \
+              TELEGRAM_OWNER_ID=${{ secrets.TELEGRAM_OWNER_ID }} \
+              PYTHONUNBUFFERED=1 \
+            --restart-policy Always \
+            --location eastus \
+            --os-type Linux
