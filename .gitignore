@@ -1,0 +1,9 @@
+.env
+wallets/*.env
+__pycache__/
+*.pyc
+activity_log.jsonl
+last_run.json
+ranked_watchlist.json
+tge_alerted.json
+venv/

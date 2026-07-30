@@ -1,0 +1,12 @@
+- name: Monad
+  network: testnet
+  actions: [faucet_claim, swap, stake_apriori, nft_mint]
+  frequency_days: 1
+- name: Somnia
+  network: testnet
+  actions: [faucet_claim, swap, quest_complete]
+  frequency_days: 1
+- name: Berachain
+  network: testnet
+  actions: [faucet_claim, swap, lp_deposit]
+  frequency_days: 2
