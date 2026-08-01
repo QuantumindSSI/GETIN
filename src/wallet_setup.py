@@ -43,9 +43,13 @@ def generate_wallet(name: str = "wallet_01") -> str:
     print(f"Wallet generated: {name}")
     print(f"Address: {acct.address}")
     print(f"Private key saved to: {env_path}")
-    print()
-    print("Mnemonic (12 words) — store this offline, never share:")
-    print(mnemonic)
+    print(f"Recovery phrase written to: wallets/{name}_mnemonic.txt (chmod 600)")
+    print("STORE THIS FILE OFFLINE AND DELETE IT FROM DISK WHEN SAFE.")
+    # Write mnemonic to a separate file — NEVER print to stdout
+    mnemonic_path = os.path.join(WALLET_DIR, f"{name}_mnemonic.txt")
+    with open(mnemonic_path, "w", encoding="utf-8") as fh:
+        fh.write(mnemonic)
+    os.chmod(mnemonic_path, 0o600)
     return acct.address
 
 
@@ -79,7 +83,8 @@ def import_mnemonic(mnemonic: str, name: str = "wallet_01") -> str:
 def generate_solana_wallet(name: str = "solana_01") -> str:
     """Create a fresh Solana keypair and save the private key."""
     kp = Keypair()
-    secret = kp.secret()  # bytes[64]
+    # to_bytes() returns 64 bytes (seed + pubkey), compatible with from_bytes()
+    secret = kp.to_bytes()
 
     _ensure_wallet_dir()
     env_path = os.path.join(WALLET_DIR, f"{name}.env")
@@ -100,17 +105,18 @@ def generate_solana_wallet(name: str = "solana_01") -> str:
 
     print(f"Solana wallet generated: {name}")
     print(f"Address: {kp.pubkey()}")
-    print(f"Private key (64 bytes hex) saved to: {env_path}")
+    print(f"Private key (128 hex) saved to: {env_path}")
     print()
-    print("Import this key into Phantom or Solflare:")
-    print("Settings → Add/Connect Wallet → Import Private Key → paste hex")
+    print("For Phantom or Solflare import, use the address above to 'watch'")
+    print("or send SOL from another wallet. The hex format is for internal")
+    print("GETIN use only — Phantom/Solflare expect base58 keypairs or mnemonics.")
     return str(kp.pubkey())
 
 
 def load_account(private_key: Optional[str] = None, name: str = "wallet_01") -> LocalAccount:
     """Load an account from env vars or a named wallet file."""
     key = private_key or os.getenv("PRIVATE_KEY")
-    if not key:
+    if not key or key == "0x00":
         env_path = os.path.join(WALLET_DIR, f"{name}.env")
         if os.path.isfile(env_path):
             with open(env_path, "r", encoding="utf-8") as fh:
@@ -119,6 +125,6 @@ def load_account(private_key: Optional[str] = None, name: str = "wallet_01") -> 
                     if line.startswith("PRIVATE_KEY="):
                         key = line.split("=", 1)[1].strip('"').strip("'")
                         break
-    if not key:
+    if not key or key == "0x00":
         raise ValueError("PRIVATE_KEY is missing. Use --generate-wallet first.")
     return Account.from_key(key)

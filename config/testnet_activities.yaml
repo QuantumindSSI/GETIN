@@ -30,7 +30,7 @@ projects:
         note: Request 5 MON via Discord verification
       - name: aPriori Staking Faucet
         url: http://stake.apr.io/faucet
-        note: Auto-stakes MON when claiming
+        note: Auto-stakes MON when claiming. ⚠ HTTP (unencrypted) — verify URL before connecting.
     dex_swaps:
       - name: Uniswap
         url: https://app.uniswap.org/swap
@@ -197,8 +197,10 @@ projects:
         url: https://app.wenwin.com/
       - name: Accountable Game
         url: http://game.accountable.capital/
+        note: ⚠ HTTP (unencrypted) — verify URL before connecting.
       - name: Narwhal Finance
         url: http://testnet.narwhal.finance/
+        note: ⚠ HTTP (unencrypted) — verify URL before connecting.
       - name: Castora Prediction
         url: https://castora.xyz/
       - name: Flap Board

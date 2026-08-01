@@ -1,0 +1,76 @@
+# Yield farming strategies for GETIN
+# Amounts are percentages of available capital.
+
+strategies:
+  conservative:
+    description: "Low risk, diversified across liquid staking and lending."
+    chains:
+      ethereum:
+        allocations:
+          lido_steth: 30
+          aave_v3_weth: 20
+        min_deposit_eth: 0.01
+      solana:
+        allocations:
+          jito_sol: 50
+        min_deposit_sol: 0.1
+
+  aggressive_solana:
+    description: "Maximize yield on Solana with liquid staking."
+    chains:
+      solana:
+        allocations:
+          jito_sol: 50
+          msol: 30
+          kamino_lend_sol: 20
+        min_deposit_sol: 0.05
+
+  balanced:
+    description: "Equal weight across ETH and SOL ecosystems."
+    chains:
+      ethereum:
+        allocations:
+          lido_steth: 25
+          aave_v3_usdc: 25
+        min_deposit_eth: 0.01
+      solana:
+        allocations:
+          jito_sol: 50
+        min_deposit_sol: 0.1
+
+# Protocol config
+protocols:
+  lido_steth:
+    chain: ethereum
+    type: liquid_staking
+    asset: ETH
+    output_token: stETH
+    contract: "0xae7ab96520DE3A18E5e111B5EaAb095312D7fE84"
+
+  aave_v3_weth:
+    chain: ethereum
+    type: lending
+    asset: WETH
+    a_token: "0x4d5F47FA6A74757f35C14fD3a6Ef8E3C9BC514E8"
+    pool: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2"
+
+  aave_v3_usdc:
+    chain: ethereum
+    type: lending
+    asset: USDC
+    a_token: "0x98C23E9d8f34FEFb1B7BD6a91B7FF122F4e16F5c"
+    pool: "0x87870Bca3F3fD6335C3F4ce8392D69350B4fA4E2"
+
+  jito_sol:
+    chain: solana
+    type: liquid_staking
+    asset: SOL
+    output_token: JitoSOL
+    mint: "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn"
+
+  msol:
+    chain: solana
+    type: liquid_staking
+    asset: SOL
+    output_token: mSOL
+    mint: "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So"

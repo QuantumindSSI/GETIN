@@ -1,28 +1,46 @@
 services:
   bot:
-    image: getin-bot:latest
+    image: ghcr.io/${GITHUB_REPOSITORY:-quantumindssi/getin}:latest
     container_name: getin-bot-prod
-    restart: always
+    restart: unless-stopped
     environment:
       - CRYPTORANK_API_KEY=${CRYPTORANK_API_KEY}
       - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - TELEGRAM_OWNER_ID=${TELEGRAM_OWNER_ID}
+      - ETH_RPC_URL=${ETH_RPC_URL:-https://eth.drpc.org}
+      - SOL_RPC_URL=${SOL_RPC_URL:-https://api.mainnet-beta.solana.com}
+      - DRY_RUN=${DRY_RUN:-true}
+      - REQUIRE_CONFIRMATION=${REQUIRE_CONFIRMATION:-true}
+      - MAX_GAS_GWEI=${MAX_GAS_GWEI:-50}
       - PYTHONUNBUFFERED=1
     volumes:
       - getin_data:/app/persist
+      - getin_logs:/app/logs
+    security_opt:
+      - no-new-privileges:true
+    read_only: true
+    tmpfs:
+      - /tmp
     logging:
       driver: json-file
       options:
         max-size: "10m"
-        max-file: "5"
+        max-file: "3"
     deploy:
       resources:
         limits:
           cpus: "0.5"
           memory: "256M"
         reservations:
-          cpus: "0.25"
-          memory: "128M"
+          cpus: "0.1"
+          memory: "64M"
+    healthcheck:
+      test: ["CMD", "pgrep", "-f", "telegram_bot"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
 
 volumes:
   getin_data:
+  getin_logs:

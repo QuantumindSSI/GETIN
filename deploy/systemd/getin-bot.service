@@ -1,5 +1,5 @@
 [Unit]
-Description=GETIN Telegram Bot - Crypto Farming Agent
+Description=GETIN Telegram Bot — DeFi Yield Scanner and Demo Quest Tracker
 After=network.target
 
 [Service]
@@ -11,8 +11,8 @@ Environment=PYTHONUNBUFFERED=1
 ExecStart=/home/azureuser/getin/venv/bin/python -u -m src.telegram_bot
 Restart=always
 RestartSec=10
-StandardOutput=append:/var/log/getin-bot.log
-StandardError=append:/var/log/getin-bot.log
+StandardOutput=append:/home/azureuser/getin/logs/getin-bot.log
+StandardError=append:/home/azureuser/getin/logs/getin-bot.log
 
 [Install]
 WantedBy=multi-user.target

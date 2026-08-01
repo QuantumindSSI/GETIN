@@ -4,7 +4,9 @@ from typing import Any, Dict
 
 
 class ActivityLogger:
-    """Log every on-chain action to a local JSON Lines file."""
+    """Log activity tracking to a local JSON Lines file.
+    NOTE: Entries may be 'testnet only' or 'dry-run only' — not all entries
+    represent confirmed transactions on any blockchain."""
 
     def __init__(self, out_path: str = "activity_log.jsonl"):
         self.out_path = out_path

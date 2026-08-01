@@ -69,10 +69,16 @@ class YieldScanner:
 
     @staticmethod
     def calculate_roi(apy: float, amount: float = 1000.0) -> Dict[str, Any]:
-        """Project per-6-hour and 30-day returns for a given APY."""
-        hourly_rate = apy / 100.0 / 365.0 / 24.0
-        per_6h = amount * hourly_rate * 6.0
-        per_30d = amount * hourly_rate * 24.0 * 30.0
+        """
+        Project per-6-hour and 30-day compounded returns for a given APY.
+        Uses compound formula: amount * ((1 + APY)^(hours/8760) - 1).
+        For short periods and typical APY values (<20%), the difference from
+        simple (linear) projection is negligible.
+        """
+        # APY = (1 + r)^periods - 1, so periodic_factor = (1 + APY)^(1/periods)
+        # For fractional periods: return = amount * ((1 + APY)^(fraction) - 1)
+        per_6h = amount * ((1 + apy / 100.0) ** (6.0 / (365.0 * 24.0)) - 1)
+        per_30d = amount * ((1 + apy / 100.0) ** (30.0 / 365.0) - 1)
         return {
             "amount_usd": round(amount, 2),
             "apy_pct": round(apy, 2),

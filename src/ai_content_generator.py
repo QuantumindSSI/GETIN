@@ -5,76 +5,82 @@ from typing import Any, Dict, List, Optional
 
 CONTENT_DIR = "generated_content"
 
+DISCLAIMER = (
+    "AI-GENERATED DRAFT — REQUIRES MANUAL REVIEW: This content was generated "
+    "by a template-based bot. It contains fabricated placeholder data, statistics, "
+    "and code that may not correspond to any real protocol. You MUST verify every "
+    "fact, rewrite all automated claims, and replace placeholder code with real, "
+    "verified information before submitting to any bounty platform. Submitting "
+    "AI-generated content as your own work violates the terms of service of "
+    "Superteam, Layer3, Galxe, Immunefi, and most other platforms.\n"
+)
+
 
 class AIContentGenerator:
     """
-    Generate AI-written content for bounty and quest submissions.
-    Handles blog posts, tutorials, Twitter threads, bug reports,
-    quiz answers, and documentation contributions.
-    Content is saved to generated_content/ for user review before submission.
+    Generate DRAFT template content for educational and formatting reference.
+    WARNING: All output is template-based and contains fabricated placeholder data.
+    It is intended as a STRUCTURAL EXAMPLE only. Substantial human rewriting,
+    fact-checking, and customization is REQUIRED before any submission.
+
+    Under NO circumstances should the generated content be submitted to
+    bounty platforms (Superteam, Layer3, Galxe, Immunefi, Tea Protocol, etc.)
+    without extensive manual verification and rewriting.
     """
 
     def __init__(self):
         os.makedirs(CONTENT_DIR, exist_ok=True)
 
     def generate_blog_post(self, topic: str, platform: str = "Superteam", word_count: int = 800) -> Dict[str, Any]:
-        """Generate a tutorial or blog post for a content bounty."""
-        title = f"{topic} — A Complete Guide for Beginners"
+        title = f"{topic} — DRAFT Template (Requires Rewriting)"
         slug = title.lower().replace(" ", "-").replace("—", "").replace("/", "-")
 
         sections = [
             ("What You Will Learn", [
-                f"The core concepts behind {topic}",
-                f"How to get started with {topic} in under 10 minutes",
-                "Common mistakes and how to avoid them",
-                "Advanced strategies for maximum results",
+                f"The core concepts behind {topic} (VERIFY: list only what you actually researched)",
+                f"How to interact with {topic}",
+                "Common mistakes and how to avoid them (based on your EXPERIENCE — not fabricated)",
+                "Advanced strategies for maximum results (based on YOUR proven approach)",
             ]),
             ("Why This Matters", [
-                f"{topic} is one of the fastest-growing areas in cryptocurrency right now.",
-                "Understanding this topic gives you an edge over 90% of newcomers.",
-                "Early adopters consistently earn the highest returns.",
-                f"Let us walk through everything you need to know about {topic}.",
+                "REPLACE THIS SECTION: Find real statistics and cite actual sources.",
+                "Do not fabricate percentages or adoption numbers.",
+                "Research specific events, partnerships, or protocol updates that make this topic timely.",
             ]),
             ("Getting Started", [
-                f"First, ensure you have a compatible wallet installed. Phantom for Solana, MetaMask for Ethereum.",
+                f"First, ensure you have a compatible wallet installed.",
                 f"Visit the official {topic} platform and connect your wallet.",
-                "You need a small amount of gas tokens. Use a faucet for testnet or deposit minimal funds for mainnet.",
-                "Take 5 minutes to read the official documentation. This saves hours of troubleshooting later.",
+                "Fund your wallet with a small test amount before executing large transactions.",
+                "Read the official documentation. Verify ALL URLs before connecting.",
             ]),
             ("Step-by-Step Walkthrough", [
-                f"Step 1: Open the {topic} dApp at the official URL.",
-                f"Step 2: Configure your wallet for the correct network. Verify the chain ID.",
-                f"Step 3: Execute your first transaction. Start with a small amount to test.",
-                f"Step 4: Verify the transaction on the block explorer.",
-                f"Step 5: Repeat the process to build a consistent on-chain history.",
+                f"REPLACE with YOUR actual step-by-step experience with {topic}.",
+                "Include REAL screenshots from your own testing.",
+                "Use real transaction hashes from your own wallet activity.",
+                "Every claim must be verifiable by readers.",
             ]),
             ("Common Mistakes", [
-                "Sending all your funds in one transaction. Always test with a small amount first.",
-                "Not checking gas prices before submitting. High gas can erase your profits.",
-                "Using unofficial links or phishing sites. Always verify URLs from official sources.",
-                "Forgetting to claim rewards. Set a calendar reminder every 7 days.",
-            ]),
-            ("Advanced Tips", [
-                "Use multiple wallets to diversify your on-chain footprint across protocols.",
-                "Time your transactions during low-gas periods (weekends, early UTC hours).",
-                f"Compound your earnings by deploying them into {platform} yield pools immediately.",
-                "Track all transaction hashes. They are proof of activity for airdrop eligibility.",
+                "Sending all funds in one transaction. Start small.",
+                "Not checking gas prices before submitting. High gas can make small trades uneconomical.",
+                "Using unofficial links or phishing sites. ALWAYS verify URLs.",
+                "Forgetting to claim rewards. Set a calendar reminder.",
             ]),
             ("Conclusion", [
-                f"{topic} is accessible, free to start, and rewards consistent participation.",
-                "The best time to start was 6 months ago. The second best time is today.",
-                "Set aside 10 minutes daily. After 30 days, you will have 300+ on-chain transactions.",
-                "Good luck. Start now.",
+                "Summarize YOUR actual experience with this topic.",
+                "Do not fabricate earnings projections or guarantee returns.",
+                "Be honest about what worked and what didn't for you.",
             ]),
         ]
 
         post = f"# {title}\n\n"
+        post += DISCLAIMER
+        post += "---\n\n"
         post += f"*Estimated reading time: {word_count // 200} minutes*\n\n"
         for heading, paragraphs in sections:
             post += f"## {heading}\n\n"
             for p in paragraphs:
                 post += f"{p}\n\n"
-        post += "\n---\n*Generated by GETIN AI Agent. Review and customize before submitting to the bounty platform.*\n"
+        post += "\n---\n*AI-Generated DRAFT Template. Verify, edit, and rewrite before any submission.*\n"
 
         filename = f"{slug}.md"
         filepath = os.path.join(CONTENT_DIR, filename)
@@ -86,26 +92,27 @@ class AIContentGenerator:
             "word_count": word_count,
             "filepath": filepath,
             "platform": platform,
-            "estimated_reward": "$50-$500 USDC",
+            "estimated_reward": "UNKNOWN — depends entirely on platform acceptance",
             "sections": len(sections),
             "generated_at": datetime.now(timezone.utc).isoformat(),
+            "warning": "Do not submit without substantial human review and rewriting.",
         }
 
     def generate_twitter_thread(self, topic: str, tweet_count: int = 8) -> Dict[str, Any]:
-        """Generate a Twitter/X thread for engagement bounties."""
         tweets = [
-            f"1/ I just explored {topic} from zero to fully functional in under 15 minutes. Here is the complete guide. No prior experience needed. 🧵",
-            f"2/ First, what is {topic}? It is a new way to earn crypto rewards by completing structured on-chain and off-chain tasks. Think of it as getting paid to learn.",
-            f"3/ Getting started costs exactly $0. You need: a wallet (Phantom for Solana, MetaMask for EVM), an internet connection, and 10 minutes of focused time. That is it.",
-            f"4/ Step 1: Create a fresh wallet specifically for this. Never use your main wallet. Generate one with GETIN bot: /wallet for EVM, /solana_wallet for Solana.",
-            f"5/ Step 2: Visit the official {topic} platform. Connect your wallet. Do not use any link someone DMed you. Verify the URL yourself in the official Discord or Twitter bio.",
-            f"6/ Step 3: Complete your first quest. Start with the easiest one labeled 'Free' or '$0 cost'. These are 5-minute tasks that teach you the platform basics.",
-            f"7/ Step 4: Repeat daily. The consistency matters more than the complexity. A 5-minute quest every day for 30 days beats one hour once a week. Streak bonuses multiply your rewards.",
-            f"8/ The math: 1 quest/day × 30 days = 30 completions. Average reward $2-5/quest = $60-150/month. From $0. With 10 minutes per day. Start now.",
+            f"[AI-GENERATED DRAFT — REVIEW BEFORE POSTING] {topic} thread. 🧵",
+            f"[DRAFT] REPLACE with your own research on {topic}. Do not post fabricated claims.",
+            f"[DRAFT] Getting started costs $0. REPLACE with real costs based on your experience.",
+            f"[DRAFT] REPLACE: Describe wallet setup. Never post AI-generated wallet instructions verbatim.",
+            f"[DRAFT] REPLACE: Describe the platform with your own words. Verify all URLs.",
+            f"[DRAFT] REPLACE: Share YOUR real experience and results. Do not fabricate outcomes.",
+            f"[DRAFT] REPLACE: Consistency matters. Share your actual practice routine.",
+            f"[DRAFT] REPLACE: Share YOUR actual results. Every claim must be verifiable.",
         ]
 
-        thread = "\n\n".join(tweets[:tweet_count])
-        thread += f"\n\nSubscribe to @Yieldabot for automated quest completion. /auto_quest to start."
+        thread = "[AI-GENERATED DRAFT THREAD — DO NOT POST WITHOUT REWRITING]\n"
+        thread += "This is a structural template only. Rewrite every tweet in your own words.\n\n"
+        thread += "\n\n".join(tweets[:tweet_count])
 
         filename = f"thread-{topic.lower().replace(' ','-')}.txt"
         filepath = os.path.join(CONTENT_DIR, filename)
@@ -113,194 +120,179 @@ class AIContentGenerator:
             f.write(thread)
 
         return {
-            "title": f"Thread: {topic}",
+            "title": f"Draft Thread Template: {topic}",
             "tweet_count": tweet_count,
             "filepath": filepath,
-            "estimated_reward": "$20-$100 USDC",
+            "estimated_reward": "UNKNOWN — depends on platform acceptance",
             "generated_at": datetime.now(timezone.utc).isoformat(),
+            "warning": "Do not post AI-generated threads to Twitter without substantial rewriting.",
         }
 
     def generate_bug_report(self, project: str, vulnerability: str, severity: str = "Medium") -> Dict[str, Any]:
-        """Generate a structured security bug report for Immunefi/Code4rena/Superteam."""
-        report = f"""# Bug Report: {vulnerability} in {project}
+        """
+        CRITICAL WARNING: This function generates a FORMATTING TEMPLATE ONLY.
+        It does NOT and CANNOT find real security vulnerabilities.
+        The template contains fabricated placeholder data.
+        Submitting this to Immunefi, Code4rena, or Superteam AS-IS is a
+        TERMS-OF-SERVICE VIOLATION that WILL result in permanent blacklisting.
 
-## Summary
-A {severity.lower()}-severity vulnerability was identified in {project} that allows an attacker to {vulnerability.lower()}.
+        Real bug bounty work requires:
+        - Manual smart contract code audit
+        - Fuzzing with real tools (Foundry, Echidna, etc.)
+        - On-chain transaction testing
+        - Verifiable proof-of-concept against a SPECIFIC commit hash
+        """
+        report = f"""# SECURITY RESEARCH TEMPLATE — NOT A REAL BUG REPORT
 
-## Severity
-**{severity}**
+!!! WARNING !!!
+This is a FORMATTING TEMPLATE ONLY. The vulnerability described below
+is FABRICATED and DOES NOT exist. This template is provided solely as
+an example of proper bug report structure.
 
-## Description
-The {project} smart contract contains a flaw in its access control logic. Specifically, the function responsible for {vulnerability.lower()} does not properly validate caller permissions, allowing any external address to invoke it.
+DO NOT submit this to Immunity, Code4rena, Superteam, or any other
+security bounty platform. Submitting fabricated reports is a terms-of-service
+violation that results in permanent blacklisting.
 
-## Impact
-If exploited, this vulnerability could result in:
-- Unauthorized access to restricted functionality
-- Potential fund drainage from the contract
-- State corruption affecting downstream protocol operations
-
-## Proof of Concept
-```solidity
-// Attacker deploys this contract
-contract Exploit {{
-    address target = {project}_ADDRESS;
-
-    function attack() external {{
-        // Call the vulnerable function
-        ITarget(target).vulnerableFunction(params);
-    }}
-}}
-```
-
-## Recommended Fix
-Add an access control modifier to the vulnerable function:
-
-```solidity
-function vulnerableFunction(params) external onlyOwner {{
-    // existing logic
-}}
-```
-
-Consider using OpenZeppelin's AccessControl for role-based permissions.
-
-## References
-- Project documentation: https://docs.{project.lower().replace(' ','-')}.com
-- Exploit transaction (testnet): [tx_hash]
-- Affected contract: [address]
+To write a REAL bug report:
+1. Actually audit the smart contract code
+2. Actually find a real vulnerability through testing
+3. Actually write a verifiable proof-of-concept against a specific commit
+4. Actually verify the exploit works on a testnet fork
 
 ---
-*Generated by GETIN AI Agent. Review technical accuracy before submitting to the bounty platform.*
+
+## TEMPLATE SECTION (for reference only)
+
+### Summary
+A {severity.lower()}-severity vulnerability was DISCOVERED AND VERIFIED in {project}.
+
+### Severity
+**{severity}** (verified through impact assessment against protocol documentation)
+
+### Description
+
+REPLACE THIS ENTIRE SECTION with your actual findings. Include:
+- The specific contract file and line numbers
+- The commit hash or deployment address
+- The exact condition that triggers the vulnerability
+
+### Impact
+
+REPLACE with quantified impact:
+- Maximum value at risk
+- Attack conditions
+- Required privileges or access
+
+### Proof of Concept
+
+REPLACE with your ACTUAL proof-of-concept code that:
+- Was tested on a local mainnet fork
+- Produces a verifiable state change
+- Can be reproduced by the protocol's security team
+
+### Recommended Fix
+
+REPLACE with your ACTUAL remediation suggestion based on:
+- Understanding of the contract architecture
+- Impact on existing protocol logic
+- Gas cost of mitigation
+
+---
+
+*This is a formatting reference template. No real vulnerability is claimed.*
 """
 
-        filename = f"bug-report-{project.lower().replace(' ','-')}.md"
+        filename = f"bug-report-template-{project.lower().replace(' ','-')}.md"
         filepath = os.path.join(CONTENT_DIR, filename)
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(report)
 
         return {
-            "title": f"Bug Report: {project} — {vulnerability}",
+            "title": f"BUG REPORT TEMPLATE (NOT A REAL FINDING): {project}",
             "severity": severity,
             "filepath": filepath,
-            "platform": "Immunefi/Superteam/Code4rena",
-            "estimated_reward": "$100-$10,000 USDC",
+            "platform": "Immunefi/Superteam/Code4rena — SUBMITTING THIS AS-IS IS A TERMS VIOLATION",
+            "estimated_reward": "WARNING: Generated templates have NO value. Real bug bounties require ACTUAL vulnerability discovery.",
             "generated_at": datetime.now(timezone.utc).isoformat(),
         }
 
     def generate_quiz_answers(self, topic: str, questions: List[str]) -> Dict[str, Any]:
-        """Generate AI-researched answers for crypto quiz quests."""
+        """Generate a STUDY GUIDE with resource links. NO answers are provided."""
         answers = []
         for i, q in enumerate(questions, 1):
             answers.append({
                 "question": q,
-                "answer": f"Based on {topic} documentation, the correct answer is determined by the protocol's specification. Refer to docs.{topic.lower().replace(' ','-')}.com for the authoritative source.",
-                "source": f"https://docs.{topic.lower().replace(' ','-')}.com",
+                "note": "STUDY GUIDE — Research this question yourself using the official documentation.",
+                "resource": f"https://docs.{topic.lower().replace(' ','-').replace('/','')}.com",
             })
 
-        filename = f"quiz-{topic.lower().replace(' ','-')}.json"
+        filename = f"study-guide-{topic.lower().replace(' ','-').replace('/','')}.json"
         filepath = os.path.join(CONTENT_DIR, filename)
         with open(filepath, "w", encoding="utf-8") as f:
-            json.dump({"topic": topic, "answers": answers, "generated_at": datetime.now(timezone.utc).isoformat()}, f, indent=2)
+            json.dump({
+                "topic": topic,
+                "type": "STUDY GUIDE ONLY — No answers provided",
+                "guidance": "Research each question using official documentation. Never submit AI-generated content as your own answers.",
+                "questions": answers,
+                "generated_at": datetime.now(timezone.utc).isoformat(),
+            }, f, indent=2)
 
         return {
-            "title": f"Quiz Answers: {topic}",
-            "questions_answered": len(answers),
+            "title": f"Study Guide: {topic}",
+            "questions_covered": len(answers),
             "filepath": filepath,
-            "estimated_reward": "$0-$5 in tokens",
+            "note": "This is a STUDY GUIDE with topic resource links only. No answers are provided.",
             "generated_at": datetime.now(timezone.utc).isoformat(),
         }
 
     def generate_documentation_page(self, project: str, page_title: str) -> Dict[str, Any]:
-        """Generate a documentation page for open-source project contributions."""
-        doc = f"""# {page_title}
+        doc = f"""# {page_title} — DOCUMENTATION TEMPLATE (VERIFY BEFORE USE)
+
+{DISCLAIMER}
 
 ## Overview
-This page documents how to interact with {project} programmatically using the official API.
+REPLACE: Describe what {project} does and why this page matters.
 
 ## Prerequisites
-- A funded wallet on the {project} network
-- Node.js 18+ or Python 3.10+
-- The official {project} SDK
+REPLACE with verified prerequisites from the OFFICIAL {project} documentation.
 
-## Installation
-```bash
-npm install {project.lower().replace(' ','-')}-sdk
-# or
-pip install {project.lower().replace(' ','-')}-sdk
-```
+## Getting Started
+REPLACE with your own step-by-step instructions based on actually testing {project}.
+Do not use fabricated SDK names or npm packages. Verify every command against
+the project's actual GitHub repository.
 
-## Quick Start
-```javascript
-const sdk = await SDK.init({{
-    network: 'mainnet',
-    wallet: yourWallet
-}});
-
-const result = await sdk.interact({{
-    action: 'swap',
-    from: 'ETH',
-    to: 'USDC',
-    amount: '100'
-}});
-
-console.log(result.transactionHash);
-```
-
-## API Reference
-
-### `SDK.init(config)`
-Initialize the SDK with network and wallet configuration.
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| network | string | Yes | Network to connect to |
-| wallet | Wallet | Yes | User's wallet instance |
-
-### `SDK.interact(params)`
-Execute an on-chain interaction.
-
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| action | string | Yes | Action type (swap, stake, bridge) |
-| from | string | Yes | Source token |
-| to | string | Yes | Destination token |
-| amount | string | Yes | Amount to interact with |
+## Code Examples
+REPLACE: All code examples below are FABRICATED PLACEHOLDERS.
+Copy-paste real, working code from the project's official examples directory.
 
 ## Error Handling
-```javascript
-try {{
-    const result = await sdk.interact(params);
-}} catch (error) {{
-    if (error.code === 'INSUFFICIENT_FUNDS') {{
-        // Handle gas shortage
-    }}
-}}
-```
+REPLACE: Describe errors you actually encountered. Do not fabricate error codes.
 
 ## Troubleshooting
-- **Error: Network timeout**: Increase the timeout in SDK config
-- **Error: Nonce too low**: Reset the wallet's transaction count
-- **Error: Insufficient gas**: Fund your wallet with native tokens
+REPLACE: List issues you personally faced and solved. Real troubleshooting, not fabricated.
 
 ---
-*Generated by GETIN AI Agent. Verify accuracy against official {project} documentation before submitting.*
+
+*AI-Generated DRAFT Template. Verify ALL information against official {project} documentation.*
 """
 
-        filename = f"docs-{project.lower().replace(' ','-')}-{page_title.lower().replace(' ','-')}.md"
+        filename = f"docs-template-{project.lower().replace(' ','-')}-{page_title.lower().replace(' ','-')}.md"
         filepath = os.path.join(CONTENT_DIR, filename)
         with open(filepath, "w", encoding="utf-8") as f:
             f.write(doc)
 
         return {
-            "title": f"Docs: {page_title} for {project}",
+            "title": f"Docs Template: {page_title} for {project}",
             "filepath": filepath,
-            "platform": "GitHub/GitBook/Dework",
-            "estimated_reward": "Gitcoin matching / Tea Protocol rewards",
+            "platform": "GitHub/GitBook/Dework — Verify before PR",
+            "warning": "Do not submit fabricated documentation to open-source projects.",
             "generated_at": datetime.now(timezone.utc).isoformat(),
         }
 
     def list_generated(self) -> List[Dict[str, Any]]:
-        """List all AI-generated content files."""
         results = []
+        if not os.path.isdir(CONTENT_DIR):
+            return results
         for root, _, files in os.walk(CONTENT_DIR):
             for f in files:
                 path = os.path.join(root, f)

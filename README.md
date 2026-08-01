@@ -1,8 +1,12 @@
 # GETIN — Cryptocurrency Farming Agent
 
-GETIN automates testnet participation, DeFi yield monitoring, and currency
-tracking. One CLI agent manages wallets, scans live yields, watches markets,
-and logs every on-chain action for airdrop eligibility.
+GETIN automates testnet activity tracking, DeFi yield monitoring, and currency tracking.
+It provides a CLI agent and Telegram bot for managing wallets, scanning live yields, watching
+markets, and tracking on-chain activity for airdrop eligibility awareness.
+
+NOTE: Testnet farming is for activity tracking and educational purposes only.
+Testnet tokens have no real value. Airdrops are speculative and never guaranteed.
+Real mainnet yield requires deploying actual capital via --invest.
 
 ---
 
@@ -158,18 +162,18 @@ Verify every claim link manually before interacting.
 
 ## Solana Zero-Capital Farming
 
-GETIN includes a complete zero-capital workflow for Solana. You can start
-farming with exactly $0.
+GETIN includes a reference workflow for Solana. You can start exploring with exactly $0.
 
 1.  Generate a Solana wallet: `python -m src.main --generate-solana-wallet`
 2.  Import the hex key into Phantom or Solflare
 3.  Request free Devnet SOL from [solfaucet.com](https://solfaucet.com)
 4.  Switch Phantom to Devnet and practice on Orca, Raydium, and Kamino
     (free test versions)
-5.  Earn real mainnet tokens ($0 cost) through Layer3, Zealy, Galxe, and
-    Superteam bounties
-6.  Deploy earned tokens into mainnet yield pools. Compound at live APY
-    rates shown by `--yield-scan`
+5.  Explore bounty platforms like Layer3, Zealy, Galxe, and Superteam.
+    Some bounties pay real mainnet tokens upon acceptance — acceptance is
+    competitive and not guaranteed. Devnet SOL has no mainnet value.
+6.  If you earn tokens, deploy into mainnet yield pools. Compound at live
+    APY rates shown by `--yield-scan`
 
 The full step-by-step guide is inside `config/testnet_activities.yaml`
 under the Solana section.

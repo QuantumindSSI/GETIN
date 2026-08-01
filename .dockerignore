@@ -1,14 +1,65 @@
-venv/
+# Git
+.git/
+.gitignore
+.gitattributes
+
+# Environment files — NEVER in image
+.env
+.env.*
+*.env
+
+# Wallet keys — NEVER in image
+wallets/
+wallets/*.env
+wallets/*.json
+wallets/*.txt
+
+# Python
 __pycache__/
 *.pyc
-.env
+*.pyo
+venv/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs and state files
+logs/
+*.log
 *.jsonl
-ranked_watchlist.json
-last_run.json
-tge_alerted.json
+*.log.*
+
+# State files (generated at runtime)
+earnings.json
+completed_quests.json
 subscribers.json
 report_chats.json
-.git
-.gitignore
-README.md
+auto_quest_log.json
+referrals.json
+portfolio_actions.jsonl
+harvest_log.jsonl
+positions.json
+last_run.json
+ranked_watchlist.json
+tge_alerted.json
+activity_log.jsonl
+
+# Generated content
+generated_content/
+
+# CI/CD
+.github/
 deploy/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Docker
+Dockerfile
+docker-compose*.yml
+.dockerignore

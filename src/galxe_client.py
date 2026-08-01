@@ -11,8 +11,13 @@ GALXE_ACCESS_TOKEN_ENV = "GALXE_ACCESS_TOKEN"
 
 class GalxeClient:
     """
-    Programmatic Galxe quest discovery and eligibility checking via GraphQL API.
-    Requires a GALXE_ACCESS_TOKEN from dashboard.galxe.com -> Settings -> Server API.
+    Read-only Galxe GraphQL client for quest discovery and eligibility checks.
+
+    WARNING: Galxe does NOT offer a documented public API. The GraphQL endpoint
+    and Query field names are speculative — reverse-engineered from browser
+    inspection and NOT confirmed against any official documentation. The
+    'access-token' auth header is unverified against any real Galxe deployment.
+    This client may not work with any actual Galxe service.
     """
 
     def __init__(self, access_token: Optional[str] = None):
@@ -74,7 +79,9 @@ class GalxeClient:
         return data.get("quest", {})
 
     def find_automatable_quests(self, space_id: str, address: str) -> List[Dict]:
-        """Find all quests a wallet can auto-complete via on-chain actions."""
+        """Find quests where a wallet is already eligible AND has unclaimed rewards.
+    NOTE: This method reads data from the Galxe GraphQL API only.
+    It does NOT complete quests, claim rewards, or perform any write operations."""
         quests = self.list_active_quests(space_id)
         results = []
         for q in quests:

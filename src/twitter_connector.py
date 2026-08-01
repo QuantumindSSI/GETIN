@@ -8,9 +8,17 @@ import tweepy
 TWITTER_TOKENS_DIR = "twitter_tokens"
 TWITTER_ENV_PREFIX = "TWITTER_"
 
-# Set these in .env from developer.twitter.com
+# OAuth 1.0a credentials — Consumer Key & Secret from Twitter Developer Portal.
+# These are labeled "API Key and Secret" on the portal, NOT "Client ID".
+# Required for posting tweets (write access).
+TWITTER_CONSUMER_KEY = os.getenv(f"{TWITTER_ENV_PREFIX}CONSUMER_KEY", "") or os.getenv(f"{TWITTER_ENV_PREFIX}API_KEY", "")
+TWITTER_CONSUMER_SECRET = os.getenv(f"{TWITTER_ENV_PREFIX}CONSUMER_SECRET", "") or os.getenv(f"{TWITTER_ENV_PREFIX}API_KEY_SECRET", "")
+
+# OAuth 2.0 credentials — Client ID & Client Secret (for PKCE/App-only flows)
 TWITTER_CLIENT_ID = os.getenv(f"{TWITTER_ENV_PREFIX}CLIENT_ID", "")
 TWITTER_CLIENT_SECRET = os.getenv(f"{TWITTER_ENV_PREFIX}CLIENT_SECRET", "")
+
+# Access tokens — obtained after OAuth flow
 TWITTER_ACCESS_TOKEN = os.getenv(f"{TWITTER_ENV_PREFIX}ACCESS_TOKEN", "")
 TWITTER_ACCESS_SECRET = os.getenv(f"{TWITTER_ENV_PREFIX}ACCESS_SECRET", "")
 TWITTER_BEARER_TOKEN = os.getenv(f"{TWITTER_ENV_PREFIX}BEARER_TOKEN", "")
@@ -31,11 +39,14 @@ class TwitterConnector:
         self._init_client()
 
     def _init_client(self) -> None:
-        """Initialize the Twitter client using configured credentials."""
+        """Initialize the Twitter client using configured credentials.
+        NOTE: tweepy.Client uses OAuth 1.0a Consumer Key/Secret for write access,
+        NOT the OAuth 2.0 Client ID. Set TWITTER_CONSUMER_KEY and
+        TWITTER_CONSUMER_SECRET (from 'API Key and Secret' on the portal)."""
         if TWITTER_ACCESS_TOKEN and TWITTER_ACCESS_SECRET:
             self.client = tweepy.Client(
-                consumer_key=TWITTER_CLIENT_ID or TWITTER_BEARER_TOKEN,
-                consumer_secret=TWITTER_CLIENT_SECRET,
+                consumer_key=TWITTER_CONSUMER_KEY,
+                consumer_secret=TWITTER_CONSUMER_SECRET,
                 access_token=TWITTER_ACCESS_TOKEN,
                 access_token_secret=TWITTER_ACCESS_SECRET,
                 bearer_token=TWITTER_BEARER_TOKEN,

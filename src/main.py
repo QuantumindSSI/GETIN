@@ -1,12 +1,16 @@
 import argparse
 import json
+import os
 import sys
 
 from src.config_manager import load_env, load_yaml
 from src.cryptorank_client import CryptoRankClient
 from src.currency_monitor import CurrencyMonitor
+from src.harvester import YieldHarvester
 from src.logger import ActivityLogger
+from src.portfolio_manager import PortfolioManager
 from src.refresh_watchlist import refresh_watchlist
+from src.safety_guard import SafetyGuard
 from src.task_scheduler import TaskScheduler
 from src.tge_monitor import TGEMonitor
 from src.wallet_manager import WalletManager
@@ -16,10 +20,10 @@ from src.yield_scanner import YieldScanner
 
 WARNING = """
 SECURITY WARNING
-This bot signs real on-chain transactions.
-Use a wallet that holds ZERO real assets (testnet tokens only).
-Never reuse a private key from a wallet that stores actual funds.
-Keys are stored locally and never sent to any third-party API.
+This bot can sign real on-chain transactions (if DRY_RUN is off).
+Use a dedicated wallet with limited funds.
+Keys are stored locally (chmod 600) and never sent to any third-party API.
+Recovery phrases are written to a file, NOT printed to the terminal.
 
 Press Ctrl+C now to abort, or the operation will continue.
 """
@@ -28,7 +32,7 @@ Press Ctrl+C now to abort, or the operation will continue.
 def main() -> None:
     """Parse arguments and run the requested agent tasks."""
     load_env()
-    parser = argparse.ArgumentParser(description="DeepSeek Farming Agent")
+    parser = argparse.ArgumentParser(description="GETIN Yield Farming Agent")
     parser.add_argument(
         "--generate-wallet",
         metavar="NAME",
@@ -64,7 +68,7 @@ def main() -> None:
     parser.add_argument("--check-tge", action="store_true", help="Check for TGE/unlock events.")
     parser.add_argument(
         "--rpc",
-        default="https://rpc.ankr.com/eth",
+        default=os.getenv("ETH_RPC_URL", "https://eth.drpc.org"),
         help="RPC endpoint for the wallet.",
     )
     parser.add_argument(
@@ -72,7 +76,28 @@ def main() -> None:
         default="wallet_01",
         help="Wallet name to use for task execution.",
     )
+
+    # NEW COMMANDS for real yield farming
+    parser.add_argument("--invest", action="store_true", help="Full deployment: exchange buy -> wallet -> yield deposit. Real funds used. Requires Kraken API keys.")
+    parser.add_argument("--harvest", action="store_true", help="Harvest accrued yield from all active positions.")
+    parser.add_argument("--positions", action="store_true", help="Show current yield positions across chains.")
+    parser.add_argument("--unwind", action="store_true", help="Withdraw all funds from yield protocols back to wallet.")
+    parser.add_argument("--strategy", default="conservative", help="Strategy name from config/strategies.yaml")
+    parser.add_argument("--budget-gbp", type=float, default=0.0, help="GBP budget for --invest")
+    parser.add_argument("--sol-rpc", default=os.getenv("SOL_RPC_URL", "https://api.mainnet-beta.solana.com"), help="Solana RPC endpoint")
+    parser.add_argument("--sol-wallet", default="solana_01", help="Solana wallet name (default: solana_01)")
+    parser.add_argument("--dry-run", action="store_true", help="Override DRY_RUN env var to true for this run")
+    parser.add_argument("--yes", action="store_true", help="Skip confirmations (dangerous)")
+
     args = parser.parse_args()
+
+    # Override safety guard for single run if requested
+    if args.dry_run:
+        os.environ["DRY_RUN"] = "true"
+    if args.yes:
+        os.environ["REQUIRE_CONFIRMATION"] = "false"
+
+    guard = SafetyGuard()
 
     # --- Wallet setup commands (no network needed) ---
     if args.generate_wallet:
@@ -107,6 +132,108 @@ def main() -> None:
     if args.generate_solana_wallet:
         print(WARNING)
         generate_solana_wallet(args.generate_solana_wallet)
+        return
+
+    # --- NEW: Real yield farming commands ---
+    if args.invest:
+        if args.budget_gbp <= 0:
+            print("Usage: --invest --budget-gbp 100 [--strategy conservative]")
+            sys.exit(1)
+        print(f"Strategy: {args.strategy} | Budget: £{args.budget_gbp}")
+        print(f"DRY RUN: {guard.is_dry_run()}")
+        pm = PortfolioManager(
+            strategy_name=args.strategy,
+            eth_rpc=args.rpc if "solana" not in args.rpc else None,
+            sol_rpc=args.sol_rpc,
+            wallet_name=args.wallet,
+            sol_wallet_name=args.sol_wallet,
+            guard=guard,
+        )
+        pm.run_full_deployment(args.budget_gbp)
+        harv = YieldHarvester(
+            eth_rpc=args.rpc if "solana" not in args.rpc else None,
+            sol_rpc=args.sol_rpc,
+            strategy_name=args.strategy,
+            wallet_name=args.wallet,
+            guard=guard,
+        )
+        harv.record_baselines()
+        return
+
+    if args.harvest:
+        harv = YieldHarvester(
+            eth_rpc=args.rpc if "solana" not in args.rpc else None,
+            sol_rpc=args.sol_rpc,
+            strategy_name=args.strategy,
+            wallet_name=args.wallet,
+            guard=guard,
+        )
+        summary = harv.run_harvest()
+        print(json.dumps(summary, indent=2))
+        return
+
+    if args.positions:
+        pm = PortfolioManager(
+            strategy_name=args.strategy,
+            eth_rpc=args.rpc if "solana" not in args.rpc else None,
+            sol_rpc=args.sol_rpc,
+            wallet_name=args.wallet,
+            sol_wallet_name=args.sol_wallet,
+            guard=guard,
+        )
+        pos = pm.get_positions()
+        print(json.dumps(pos, indent=2))
+        return
+
+    if args.unwind:
+        print("UNWIND: Withdrawing all funds from yield protocols...")
+        print(f"DRY RUN: {guard.is_dry_run()}")
+        if not guard.is_dry_run() and not guard.confirm("UNWIND", "This will exit all positions. Proceed?"):
+            print("Aborted.")
+            return
+        # Ethereum unwind
+        if "solana" not in args.rpc:
+            try:
+                eth = EthereumClient(args.rpc, wallet_name=args.wallet, guard=guard)
+                aave = AaveV3Client(eth, guard)
+                weth = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+                usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+                print("  Withdrawing from Aave WETH pool...")
+                try:
+                    tx = aave.withdraw_all(weth)
+                    print(f"    Tx: {tx}")
+                except Exception as e:
+                    print(f"    Failed or empty: {e}")
+                print("  Withdrawing from Aave USDC pool...")
+                try:
+                    tx = aave.withdraw_all(usdc)
+                    print(f"    Tx: {tx}")
+                except Exception as e:
+                    print(f"    Failed or empty: {e}")
+            except Exception as e:
+                print(f"  Ethereum unwind error: {e}")
+        # Solana unwind
+        try:
+            sol = SolanaClient(args.sol_rpc, wallet_name=args.wallet, guard=guard)
+            from src.yield_protocols.jupiter_solana import JupiterSwap
+            jupiter = JupiterSwap(sol, guard)
+            for mint_name, mint in (
+                ("JitoSOL", "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn"),
+                ("mSOL", "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So"),
+            ):
+                bal = sol.get_token_balance(mint)
+                if bal > 0:
+                    print(f"  Swapping {bal} {mint_name} back to SOL...")
+                    try:
+                        result = jupiter.swap_token_to_sol(mint, int(bal * 1e9))
+                        print(f"    Tx: {result['tx']}")
+                    except Exception as e:
+                        print(f"    Failed: {e}")
+                else:
+                    print(f"  No {mint_name} balance to unwind.")
+        except Exception as e:
+            print(f"  Solana unwind error: {e}")
+        print("UNWIND COMPLETE")
         return
 
     # --- Market data commands ---
@@ -208,7 +335,7 @@ def main() -> None:
     if args.run_tasks:
         logger = ActivityLogger()
         scheduler = TaskScheduler("ranked_watchlist.json", logger)
-        wallet = WalletManager(args.rpc, wallet_name=args.wallet)
+        wallet = WalletManager(args.rpc, wallet_name=args.wallet, sol_rpc=args.sol_rpc, guard=guard)
         scheduler.run(wallet)
 
 

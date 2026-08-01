@@ -9,6 +9,8 @@ on:
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
+  AZURE_RG: getin-rg
+  AZURE_LOCATION: eastus
 
 jobs:
   lint:
@@ -54,20 +56,16 @@ jobs:
           from src.config_manager import load_yaml
           from src.logger import ActivityLogger
 
-          # Import tests
           print('--- Module imports OK ---')
 
-          # Config test
           data = load_yaml('watchlist.yaml')
           assert len(data) == 3, f'Expected 3 projects, got {len(data)}'
 
-          # Subscriptions test
           register_user(12345, 'testuser')
           assert get_tier(12345) == 'free'
           assert get_premium_price() == 9.99
           print('--- Subscriptions OK ---')
 
-          # Logger test
           logger = ActivityLogger('/tmp/test_activity.jsonl')
           logger.log('Monad', 'swap', '0xabc', {})
           print('--- Logger OK ---')
@@ -110,21 +108,46 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-  deploy:
-    name: Deploy to Azure
+  deploy-aci:
+    name: Deploy to Azure Container Instances
     needs: docker
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_TARGET == 'aci'
     steps:
       - uses: actions/checkout@v4
       - name: Azure login
         uses: azure/login@v2
         with:
           creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Ensure storage for persistence
+        run: |
+          SA_EXISTS=$(az storage account show \
+            --name getinstore \
+            --resource-group ${{ env.AZURE_RG }} \
+            2>/dev/null && echo yes || echo no)
+          if [ "$SA_EXISTS" = "no" ]; then
+            az storage account create \
+              --name getinstore \
+              --resource-group ${{ env.AZURE_RG }} \
+              --location ${{ env.AZURE_LOCATION }} \
+              --sku Standard_LRS
+            KEY=$(az storage account keys list \
+              --account-name getinstore \
+              --resource-group ${{ env.AZURE_RG }} \
+              --query '[0].value' -o tsv)
+            az storage share create \
+              --account-name getinstore \
+              --account-key "$KEY" \
+              --name getin-data
+          fi
       - name: Deploy to Container Instances
         run: |
+          KEY=$(az storage account keys list \
+            --account-name getinstore \
+            --resource-group ${{ env.AZURE_RG }} \
+            --query '[0].value' -o tsv)
           az container create \
-            --resource-group getin-rg \
+            --resource-group ${{ env.AZURE_RG }} \
             --name getin-bot \
             --image ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest \
             --registry-login-server ${{ env.REGISTRY }} \
@@ -137,5 +160,53 @@ jobs:
               TELEGRAM_OWNER_ID=${{ secrets.TELEGRAM_OWNER_ID }} \
               PYTHONUNBUFFERED=1 \
             --restart-policy Always \
-            --location eastus \
-            --os-type Linux
+            --location ${{ env.AZURE_LOCATION }} \
+            --os-type Linux \
+            --azure-file-volume-account-name getinstore \
+            --azure-file-volume-account-key "$KEY" \
+            --azure-file-volume-share-name getin-data \
+            --azure-file-volume-mount-path /app/persist
+
+  deploy-vm:
+    name: Deploy to Azure VM (systemd)
+    needs: docker
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main' && vars.DEPLOY_TARGET == 'vm'
+    steps:
+      - uses: actions/checkout@v4
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+      - name: Update VM and restart bot
+        run: |
+          VM_NAME="${{ vars.AZURE_VM_NAME || 'getin-bot-vm' }}"
+          RESOURCE_GROUP="${{ env.AZURE_RG }}"
+
+          echo "Updating code on VM: $VM_NAME"
+          az vm run-command invoke \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$VM_NAME" \
+            --command-id RunShellScript \
+            --scripts "
+              set -e
+              cd /opt/getin || cd /home/*/getin || exit 1
+              git fetch origin
+              git reset --hard origin/main
+              sudo systemctl daemon-reload
+              sudo systemctl restart getin-bot
+              echo 'Bot updated and restarted'
+            " \
+            --output table
+
+          echo "Checking bot status..."
+          sleep 5
+          az vm run-command invoke \
+            --resource-group "$RESOURCE_GROUP" \
+            --name "$VM_NAME" \
+            --command-id RunShellScript \
+            --scripts "
+              sudo systemctl is-active getin-bot && echo 'Bot is ACTIVE' || echo 'Bot is NOT active'
+              tail -n 5 /opt/getin/logs/getin-bot.log 2>/dev/null || tail -n 5 /home/*/getin/logs/getin-bot.log 2>/dev/null
+            " \
+            --output table

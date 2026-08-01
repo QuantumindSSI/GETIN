@@ -6,8 +6,12 @@ from typing import Any, Dict, List, Optional
 COMPLETED_FILE = "completed_quests.json"
 EARNINGS_FILE = "earnings.json"
 
-# Curated quests that are verified to exist and pay real tokens.
-# Updated: July 2026. Rewards are approximate minimums.
+# Curated quest catalog — all values are SIMULATED for demo purposes only.
+# No real tokens are transferred. No real platforms are contacted.
+# These are tutorial descriptions of real platforms; completions are
+# tracked locally for demonstration purposes.
+# IMPORTANT: Rewards shown are TUTORIAL ILLUSTRATIONS.
+# Actual rewards depend on platform acceptance and are never guaranteed.
 
 QUEST_CATALOG: List[Dict[str, Any]] = [
     # --- BEGINNER: zero capital, no wallet needed ---
@@ -16,8 +20,8 @@ QUEST_CATALOG: List[Dict[str, Any]] = [
         "title": "Superteam Earn — First Bounty",
         "platform": "Superteam",
         "category": "beginner",
-        "reward": 50.0,
-        "reward_token": "USDC",
+        "reward": 0.0,
+        "reward_token": "SIMULATED — Actual rewards depend on platform acceptance",
         "difficulty": "easy",
         "estimated_minutes": 15,
         "url": "https://earn.superteam.fun/",
@@ -38,8 +42,8 @@ QUEST_CATALOG: List[Dict[str, Any]] = [
         "title": "Layer3 — First Quest (Intro to Crypto)",
         "platform": "Layer3",
         "category": "beginner",
-        "reward": 2.0,
-        "reward_token": "OP/ARB/SCROLL",
+        "reward": 0.0,
+        "reward_token": "SIMULATED — Actual rewards depend on platform acceptance",
         "difficulty": "easy",
         "estimated_minutes": 5,
         "url": "https://app.layer3.xyz/quests",
@@ -58,8 +62,8 @@ QUEST_CATALOG: List[Dict[str, Any]] = [
         "title": "Galxe — Join a Solana Campaign",
         "platform": "Galxe",
         "category": "beginner",
-        "reward": 1.0,
-        "reward_token": "Project Token",
+        "reward": 0.0,
+        "reward_token": "SIMULATED — Actual rewards depend on campaign",
         "difficulty": "easy",
         "estimated_minutes": 5,
         "url": "https://app.galxe.com/",
@@ -79,8 +83,8 @@ QUEST_CATALOG: List[Dict[str, Any]] = [
         "title": "Superteam Earn — Bug Bounty (Low)",
         "platform": "Superteam",
         "category": "intermediate",
-        "reward": 100.0,
-        "reward_token": "USDC",
+        "reward": 0.0,
+        "reward_token": "SIMULATED — IF bounty accepted by platform",
         "difficulty": "medium",
         "estimated_minutes": 60,
         "url": "https://earn.superteam.fun/bounties",
@@ -101,8 +105,8 @@ QUEST_CATALOG: List[Dict[str, Any]] = [
         "title": "Layer3 — Daily Streak (7-day)",
         "platform": "Layer3",
         "category": "intermediate",
-        "reward": 5.0,
-        "reward_token": "OP/ARB/SCROLL",
+        "reward": 0.0,
+        "reward_token": "SIMULATED — Depends on platform streak rules",
         "difficulty": "easy",
         "estimated_minutes": 5,
         "url": "https://app.layer3.xyz/quests",
@@ -121,7 +125,7 @@ QUEST_CATALOG: List[Dict[str, Any]] = [
         "platform": "Monad Testnet",
         "category": "intermediate",
         "reward": 0.0,
-        "reward_token": "Potential airdrop (MON)",
+        "reward_token": "SPECULATIVE — Potential airdrop only (no guaranteed value)",
         "difficulty": "easy",
         "estimated_minutes": 10,
         "url": "https://app.uniswap.org/swap",
@@ -140,7 +144,7 @@ QUEST_CATALOG: List[Dict[str, Any]] = [
         "platform": "Berachain Testnet",
         "category": "intermediate",
         "reward": 0.0,
-        "reward_token": "Potential airdrop (BERA)",
+        "reward_token": "SPECULATIVE — Potential airdrop only (no guaranteed value)",
         "difficulty": "easy",
         "estimated_minutes": 15,
         "url": "https://bartio.honey.berachain.com/",
@@ -160,8 +164,8 @@ QUEST_CATALOG: List[Dict[str, Any]] = [
         "title": "Superteam Earn — Content Writer",
         "platform": "Superteam",
         "category": "advanced",
-        "reward": 200.0,
-        "reward_token": "USDC",
+        "reward": 0.0,
+        "reward_token": "SIMULATED — IF content accepted by platform",
         "difficulty": "hard",
         "estimated_minutes": 120,
         "url": "https://earn.superteam.fun/",
@@ -182,8 +186,8 @@ QUEST_CATALOG: List[Dict[str, Any]] = [
         "title": "Layer3 — Ecosystem Sprint (30-day)",
         "platform": "Layer3",
         "category": "advanced",
-        "reward": 20.0,
-        "reward_token": "Multiple tokens",
+        "reward": 0.0,
+        "reward_token": "SIMULATED — Depends on platform sprint rules",
         "difficulty": "hard",
         "estimated_minutes": 300,
         "url": "https://app.layer3.xyz/quests",
@@ -202,7 +206,7 @@ QUEST_CATALOG: List[Dict[str, Any]] = [
         "platform": "Multi-chain",
         "category": "advanced",
         "reward": 0.0,
-        "reward_token": "Multiple airdrops (MON, BERA, Somnia)",
+        "reward_token": "SPECULATIVE — Airdrops are never guaranteed",
         "difficulty": "medium",
         "estimated_minutes": 300,
         "url": "https://t.me/yieldabot",
@@ -215,40 +219,43 @@ QUEST_CATALOG: List[Dict[str, Any]] = [
         "requires": ["EVM wallet (testnet only)", "Daily 10 minutes"],
         "cost": 0,
     },
-    # ---- AI-completable quests (20 new entries) ----
-    {"id":"GQ1","title":"Galxe — Auto-scan Solana Campaigns","platform":"Galxe","category":"intermediate","reward":10.0,"reward_token":"Points/Tokens","difficulty":"easy","estimated_minutes":1,"url":"https://app.galxe.com/","steps":["Set GALXE_ACCESS_TOKEN in .env from dashboard.galxe.com","Run /auto_quest — the bot scans all active Solana campaigns","Bot checks wallet eligibility via GraphQL API","Bot marks which quests are completable via on-chain actions","No human clicks needed — API-only operation"],"requires":["Galxe access token","Solana/EVM wallet"],"cost":0},
-    {"id":"ZF1","title":"Zerion — Auto-bridge across chains","platform":"Zerion","category":"intermediate","reward":0.0,"reward_token":"Airdrop eligibility","difficulty":"easy","estimated_minutes":2,"url":"https://api.zerion.io/v1/swap/quotes/","steps":["Set ZERION_API_KEY in .env from dashboard.zerion.io","Run /auto_quest — bot gets cross-chain swap quotes","Bot signs and broadcasts bridge transactions","Repeat across multiple chain pairs","Earn airdrop eligibility from protocol retroactive rewards"],"requires":["Zerion API key","EVM wallet with small gas balance"],"cost":1.0},
-    {"id":"MO1","title":"Monad Testnet — Auto-rotation swap+stake+deploy","platform":"Monad Testnet","category":"advanced","reward":0.0,"reward_token":"Potential MON airdrop","difficulty":"medium","estimated_minutes":5,"url":"https://testnet.monad.xyz/","steps":["Ensure wallet has testnet MON from faucet","Run /auto_quest — bot connects to Monad RPC","Bot executes swap on DEX","Bot stakes MON to liquid staking protocol","Bot deploys a minimal smart contract","Repeat daily for maximum activity breadth"],"requires":["EVM wallet","Faucet MON (free)"],"cost":0},
-    {"id":"BR1","title":"Berachain — Auto rotation swap+stake+mint","platform":"Berachain Testnet","category":"advanced","reward":0.0,"reward_token":"Potential BERA airdrop","difficulty":"medium","estimated_minutes":5,"url":"https://bartio.bex.berachain.com/","steps":["Ensure wallet has testnet BERA from faucet","Run /auto_quest — bot connects to Berachain RPC","Bot executes swap on BEX","Bot mints HONEY stablecoin","Bot stakes BERA for liquid staking","Bot deploys minimal smart contract"],"requires":["EVM wallet","Faucet BERA (free)"],"cost":0},
-    {"id":"SM1","title":"Somnia — Auto rotation stake+deploy","platform":"Somnia Testnet","category":"advanced","reward":0.0,"reward_token":"Potential airdrop","difficulty":"easy","estimated_minutes":5,"url":"https://testnet.somnia.network/","steps":["Ensure wallet has testnet STT from faucet","Run /auto_quest — bot connects to Somnia RPC","Bot stakes STT to validator via staking dashboard","Bot deploys minimal smart contract"],"requires":["EVM wallet","Faucet STT (free)"],"cost":0},
-    {"id":"AQ1","title":"Auto-faucet rotation all 3 testnets","platform":"Multi-chain","category":"intermediate","reward":0.0,"reward_token":"Testnet tokens (free gas)","difficulty":"easy","estimated_minutes":2,"url":"https://t.me/yieldabot","steps":["Run /auto_quest — bot checks wallet balances","Bot identifies faucets with expired cooldowns","Bot sends claim requests to available faucets","Bot receives free testnet tokens","Repeat on 12h/24h cycles"],"requires":["EVM wallet","No capital needed"],"cost":0},
-    {"id":"CV1","title":"Deploy contract on all 3 testnets","platform":"Multi-chain","category":"intermediate","reward":0.0,"reward_token":"Airdrop eligibility","difficulty":"easy","estimated_minutes":2,"url":"https://t.me/yieldabot","steps":["Run /auto_quest — bot deploys minimal contracts","Deployed to Monad Berachain and Somnia testnets","Each deployment is a unique on-chain interaction","Multiple deployments improve airdrop qualification"],"requires":["EVM wallet","Faucet tokens (free)"],"cost":0},
-    {"id":"GR1","title":"Grass — Auto bandwidth sharing node","platform":"Grass","category":"advanced","reward":5.0,"reward_token":"GRASS tokens (confirmed)","difficulty":"easy","estimated_minutes":1,"url":"https://www.grassfoundation.io/","steps":["Install the Grass desktop app or browser extension","Run it in the background 24/7","You earn GRASS tokens for unused bandwidth","Fully passive — no clicks after setup","Bot can monitor earnings via Grass API"],"requires":["Desktop or VPS","Internet connection"],"cost":0},
-    {"id":"TP1","title":"Tea Protocol — Register OSS repo","platform":"Tea Protocol","category":"advanced","reward":50.0,"reward_token":"TEA tokens (confirmed)","difficulty":"medium","estimated_minutes":5,"url":"https://app.tea.xyz/","steps":["Go to app.tea.xyz and connect wallet","Register your open-source GitHub repo","Tea Protocol auto-calculates your teaRank","Stake TEA tokens on your project for rewards","Higher ecosystem impact = higher rewards"],"requires":["GitHub repo","Crypto wallet"],"cost":0},
-    {"id":"TP2","title":"Tea Protocol — Stake TEA for rewards","platform":"Tea Protocol","category":"advanced","reward":10.0,"reward_token":"TEA tokens (staking yield)","difficulty":"easy","estimated_minutes":2,"url":"https://app.tea.xyz/","steps":["Acquire TEA tokens (earned from TP1 or bought)","Go to app.tea.xyz/staking","Stake TEA on high-ranked OSS projects","Earn continuous staking rewards","Fully automatable via smart contract interaction"],"requires":["TEA tokens","Crypto wallet"],"cost":20.0},
-    {"id":"GL1","title":"Galxe — Auto-claim eligible points","platform":"Galxe","category":"intermediate","reward":5.0,"reward_token":"Loyalty points + tokens","difficulty":"easy","estimated_minutes":1,"url":"https://app.galxe.com/","steps":["Set GALXE_ACCESS_TOKEN in .env","Run /auto_quest — bot queries GraphQL API","Bot finds quests where you are already eligible","Bot auto-claims all available rewards","No human interaction needed"],"requires":["Galxe access token","Completed quests"],"cost":0},
-    {"id":"GL2","title":"Galxe — Daily quest scan and complete","platform":"Galxe","category":"intermediate","reward":3.0,"reward_token":"Points (varies daily)","difficulty":"easy","estimated_minutes":1,"url":"https://app.galxe.com/","steps":["Run /auto_quest — bot scans all active spaces","Bot filters for on-chain-action quests","Bot executes required on-chain transactions","Bot verifies completion via GraphQL eligibility check","Bot claims available rewards"],"requires":["Galxe access token","EVM wallet"],"cost":0},
-    {"id":"ZB1","title":"Zerion bridge Sepolia to Monad","platform":"Zerion","category":"intermediate","reward":0.0,"reward_token":"Monad airdrop eligibility","difficulty":"easy","estimated_minutes":2,"url":"https://api.zerion.io/v1/swap/quotes/","steps":["Fund Sepolia wallet with testnet ETH (free from faucet)","Set ZERION_API_KEY in .env","Run /auto_quest — bot gets Sepolia to Monad bridge quote","Bot signs and broadcasts the bridge transaction","Bot receives MON on destination chain"],"requires":["Zerion API key","Sepolia ETH (free)"],"cost":0},
-    {"id":"ZB2","title":"Zerion bridge Ethereum to Berachain","platform":"Zerion","category":"intermediate","reward":0.0,"reward_token":"Berachain airdrop eligibility","difficulty":"easy","estimated_minutes":2,"url":"https://api.zerion.io/v1/swap/quotes/","steps":["Fund Ethereum wallet with small amount of ETH","Set ZERION_API_KEY in .env","Run /auto_quest — bot gets Ethereum to Berachain quote","Bot signs and broadcasts bridge transaction","Bot receives BERA on Berachain"],"requires":["Zerion API key","Mainnet ETH"],"cost":2.0},
-    {"id":"MS1","title":"Multi-chain 24h auto-farming cycle","platform":"Multi-chain","category":"advanced","reward":0.0,"reward_token":"3x airdrops + Galxe points","difficulty":"medium","estimated_minutes":10,"url":"https://t.me/yieldabot","steps":["Run /auto_quest — bot begins 24h cycle","Phase 1 Claim faucets on all 3 testnets","Phase 2 Execute swaps stakes deploys on all 3 chains","Phase 3 Scan Galxe for completable quests","Phase 4 Bridge via Zerion across chain pairs","Phase 5 Log all tx hashes for airdrop proof"],"requires":["EVM wallet","Faucet tokens","Galxe + Zerion keys"],"cost":0},
-    {"id":"SQ1","title":"Somnia Quest Portal auto daily","platform":"Somnia","category":"intermediate","reward":0.0,"reward_token":"Somnia quest points","difficulty":"easy","estimated_minutes":2,"url":"https://quest.somnia.network/","steps":["Connect wallet to quest.somnia.network","Run /auto_quest — bot stakes STT via staking dashboard","Bot bridges via Stargate/Relay","Bot checks for new campaigns and leaderboard position"],"requires":["EVM wallet","Faucet STT (free)"],"cost":0},
-    {"id":"BZ1","title":"Testnet bridge rotation","platform":"Multi-chain","category":"intermediate","reward":0.0,"reward_token":"LayerZero + protocol airdrops","difficulty":"easy","estimated_minutes":3,"url":"https://t.me/yieldabot","steps":["Run /auto_quest — bot executes bridge transactions","Routes Monad BSC testnet Berachain Sepolia Somnia Relay","Each bridge = unique on-chain footprint","LayerZero retroactively rewards active bridgers"],"requires":["EVM wallet","Small gas on source chain"],"cost":0},
-    {"id":"SD1","title":"Deploy contract to Solana devnet","platform":"Solana","category":"intermediate","reward":0.0,"reward_token":"Devnet practice + potential","difficulty":"medium","estimated_minutes":3,"url":"https://solfaucet.com/","steps":["Generate Solana wallet /solana_wallet","Get devnet SOL from solfaucet.com","Run /auto_quest — bot deploys minimal Solana program","Deploying contracts = high-quality testnet activity"],"requires":["Solana wallet","Devnet SOL (free)"],"cost":0},
-    {"id":"GF1","title":"Faucet rotation + auto-fund wallets","platform":"Multi-chain","category":"intermediate","reward":0.0,"reward_token":"Free testnet gas","difficulty":"easy","estimated_minutes":2,"url":"https://t.me/yieldabot","steps":["Bot checks balance across all 3 testnet wallets","If balance below threshold claims from available faucet","Rotates through 13+ faucets across Monad Berachain Somnia","Ensures wallets never run out of gas for auto-transactions"],"requires":["EVM wallets","No capital"],"cost":0},
-    {"id":"CW1","title":"Superteam — Write a tutorial blog post","platform":"Superteam","category":"intermediate","reward":50.0,"reward_token":"USDC","difficulty":"medium","estimated_minutes":2,"url":"https://earn.superteam.fun/","steps":["Run /write tutorial TOPIC","Review the generated post","Customize if needed","Submit to Superteam Content category","Receive USDC within 7-14 days"],"requires":["Superteam account","Solana wallet"],"cost":0},
-    {"id":"CW2","title":"Superteam — Write a Twitter thread and post","platform":"Superteam/Twitter","category":"beginner","reward":30.0,"reward_token":"USDC","difficulty":"easy","estimated_minutes":1,"url":"https://earn.superteam.fun/","steps":["Run /write thread TOPIC","Review via /review","Post to Twitter via /post_twitter","Submit URL to Superteam bounty","Receive USDC"],"requires":["Twitter account","Superteam account","Twitter API keys"],"cost":0},
-    {"id":"CW3","title":"Layer3 — Write a crypto guide","platform":"Layer3","category":"intermediate","reward":10.0,"reward_token":"OP/ARB tokens","difficulty":"easy","estimated_minutes":2,"url":"https://app.layer3.xyz/quests","steps":["Find a Layer3 writing quest","Run /write tutorial TOPIC","Submit through Layer3 interface"],"requires":["Layer3 account"],"cost":0},
-    {"id":"CW4","title":"GitHub Docs — Write documentation page","platform":"GitHub/GitBook/Tea Protocol","category":"advanced","reward":100.0,"reward_token":"Gitcoin/Tea Protocol","difficulty":"medium","estimated_minutes":2,"url":"https://app.tea.xyz/","steps":["Find open-source project needing docs","Run /write docs PROJECT PAGETITLE","Submit as GitHub PR","Register on Tea Protocol"],"requires":["GitHub account","Project knowledge"],"cost":0},
-    {"id":"CW5","title":"Bug bounty — AI-structured security report","platform":"Immunefi/Superteam","category":"advanced","reward":500.0,"reward_token":"USDC","difficulty":"hard","estimated_minutes":3,"url":"https://immunefi.com/bug-bounty/","steps":["Identify vulnerability","Run /write bug PROJECT VULN SEVERITY","AI generates structured PoC report","Verify and submit to Immunefi"],"requires":["Immunefi account","Technical skills"],"cost":0},
-    {"id":"CW6","title":"Daily crypto news summary","platform":"Layer3/Galxe","category":"beginner","reward":3.0,"reward_token":"Points + tokens","difficulty":"easy","estimated_minutes":1,"url":"https://app.layer3.xyz/quests","steps":["Run /write tutorial CRYPTO TOPIC","AI generates 300-word summary","Submit through quest platform"],"requires":["Platform account"],"cost":0},
-    {"id":"CW7","title":"Write a project review","platform":"Superteam","category":"advanced","reward":100.0,"reward_token":"USDC","difficulty":"medium","estimated_minutes":2,"url":"https://earn.superteam.fun/","steps":["Run /write tutorial PROJECT review","AI generates 1000-word review","Customize and submit to Superteam"],"requires":["Superteam account","Solana wallet"],"cost":0},
-    {"id":"CW8","title":"Quiz answer generation","platform":"Multi-platform","category":"beginner","reward":2.0,"reward_token":"Platform tokens","difficulty":"easy","estimated_minutes":1,"url":"https://app.layer3.xyz/quests","steps":["Find a quiz quest","Run /write quiz TOPIC Q1 Q2 Q3","Use AI answers to complete quiz"],"requires":["Platform account"],"cost":0}
+    # ---- Demo activity tracker (completions are local only, no real value) ----
+    {"id":"GQ1","title":"Galxe — Scan Solana Campaigns (demo)","platform":"Galxe","category":"intermediate","reward":0.0,"reward_token":"DEMO — Simulated tracking only","difficulty":"easy","estimated_minutes":1,"url":"https://app.galxe.com/","steps":["This is a DEMO quest. No real API integration.","No tokens are transferred. No platforms are contacted.","Tracked locally for demonstration purposes."],"requires":["None — demo only"],"cost":0},
+    {"id":"MO1","title":"Monad Testnet — Practice swap+stake (demo)","platform":"Monad Testnet","category":"advanced","reward":0.0,"reward_token":"DEMO — Simulated tracking only","difficulty":"medium","estimated_minutes":5,"url":"https://testnet.monad.xyz/","steps":["This is a DEMO quest. No real transactions are automated.","The auto-farmer uses testnet RPCs for testing only.","Actual airdrops are never guaranteed."],"requires":["EVM wallet","Faucet MON (free)"],"cost":0},
+    {"id":"BR1","title":"Berachain — Practice swap+stake (demo)","platform":"Berachain Testnet","category":"advanced","reward":0.0,"reward_token":"DEMO — Simulated tracking only","difficulty":"medium","estimated_minutes":5,"url":"https://bartio.bex.berachain.com/","steps":["This is a DEMO quest. No real transactions are automated.","The auto-farmer uses dummy contract addresses.","Actual airdrops are never guaranteed."],"requires":["EVM wallet","Faucet BERA (free)"],"cost":0},
+    {"id":"SM1","title":"Somnia — Practice stake+deploy (demo)","platform":"Somnia Testnet","category":"advanced","reward":0.0,"reward_token":"DEMO — Simulated tracking only","difficulty":"easy","estimated_minutes":5,"url":"https://testnet.somnia.network/","steps":["This is a DEMO quest. No real transactions are automated.","The auto-farmer uses dummy contract addresses.","Actual airdrops are never guaranteed."],"requires":["EVM wallet","Faucet STT (free)"],"cost":0},
+    {"id":"AQ1","title":"Faucet rotation check (demo)","platform":"Multi-chain","category":"intermediate","reward":0.0,"reward_token":"DEMO — Simulated tracking only","difficulty":"easy","estimated_minutes":2,"url":"https://t.me/yieldabot","steps":["This is a DEMO quest.","Faucets require manual CAPTCHA solving.","No automated claiming is available."],"requires":["EVM wallet","No capital"],"cost":0},
+    {"id":"CV1","title":"Deploy contract practice (demo)","platform":"Multi-chain","category":"intermediate","reward":0.0,"reward_token":"DEMO — Simulated tracking only","difficulty":"easy","estimated_minutes":2,"url":"https://t.me/yieldabot","steps":["This is a DEMO quest.","The deploy function uses compiled bytecode.","Actual deployment may fail with dummy addresses."],"requires":["EVM wallet","Faucet tokens (free)"],"cost":0},
+    {"id":"GR1","title":"Grass — Bandwidth sharing node (manual setup)","platform":"Grass","category":"advanced","reward":0.0,"reward_token":"SIMULATED — Depends on Grass Foundation rewards","difficulty":"easy","estimated_minutes":1,"url":"https://www.grassfoundation.io/","steps":["Install the Grass desktop app or browser extension","Run it in the background 24/7","Grass Foundation may reward bandwidth contributors","Fully passive — no clicks after setup"],"requires":["Desktop or VPS","Internet connection"],"cost":0},
+    {"id":"TP1","title":"Tea Protocol — Register OSS repo (manual)","platform":"Tea Protocol","category":"advanced","reward":0.0,"reward_token":"SIMULATED — Depends on Tea Protocol rewards","difficulty":"medium","estimated_minutes":5,"url":"https://app.tea.xyz/","steps":["Go to app.tea.xyz and connect wallet","Register your open-source GitHub repo","Tea Protocol auto-calculates your teaRank","Stake TEA tokens on your project for rewards","Higher ecosystem impact = higher rewards"],"requires":["GitHub repo","Crypto wallet"],"cost":0},
+    {"id":"TP2","title":"Tea Protocol — Staking (manual)","platform":"Tea Protocol","category":"advanced","reward":0.0,"reward_token":"SIMULATED — Depends on staking yield","difficulty":"easy","estimated_minutes":2,"url":"https://app.tea.xyz/","steps":["Acquire TEA tokens (earned from TP1 or bought)","Go to app.tea.xyz/staking","Stake TEA on high-ranked OSS projects","Earn continuous staking rewards","Requires manual smart contract interaction"],"requires":["TEA tokens","Crypto wallet"],"cost":20.0},
+    {"id":"GL1","title":"Galxe — Account review (demo)","platform":"Galxe","category":"intermediate","reward":0.0,"reward_token":"DEMO — Simulated tracking only","difficulty":"easy","estimated_minutes":1,"url":"https://app.galxe.com/","steps":["This is a DEMO quest. No API integration exists.","Galxe GraphQL API requires access tokens.","No automatic claiming is implemented."],"requires":["Galxe access token","Completed quests"],"cost":0},
+    {"id":"GL2","title":"Galxe — Campaign browser (demo)","platform":"Galxe","category":"intermediate","reward":0.0,"reward_token":"DEMO — Simulated tracking only","difficulty":"easy","estimated_minutes":1,"url":"https://app.galxe.com/","steps":["This is a DEMO quest.","The Galxe client can READ campaign data only.","No mutations (create/claim) are implemented."],"requires":["Galxe access token","EVM wallet"],"cost":0},
+    {"id":"ZB1","title":"Zerion — Bridge demo (manual only)","platform":"Zerion","category":"intermediate","reward":0.0,"reward_token":"SPECULATIVE — Airdrop is never guaranteed","difficulty":"easy","estimated_minutes":2,"url":"https://api.zerion.io/v1/swap/quotes/","steps":["Fund Sepolia wallet with testnet ETH (free from faucet)","Zerion API key required for quotes only","Actual bridging requires manual transaction signing","No automated bridge execution is available"],"requires":["Zerion API key","Sepolia ETH (free)"],"cost":0},
+    {"id":"ZB2","title":"Zerion bridge demo (manual only)","platform":"Zerion","category":"intermediate","reward":0.0,"reward_token":"SPECULATIVE — Airdrop is never guaranteed","difficulty":"easy","estimated_minutes":2,"url":"https://api.zerion.io/v1/swap/quotes/","steps":["Fund Ethereum wallet with small amount of ETH","Zerion API key required for quotes only","Actual bridging requires manual transaction signing","No automated bridge execution is available"],"requires":["Zerion API key","Mainnet ETH"],"cost":2.0},
+    {"id":"MS1","title":"Multi-chain demo cycle","platform":"Multi-chain","category":"advanced","reward":0.0,"reward_token":"SPECULATIVE — Airdrops are never guaranteed","difficulty":"medium","estimated_minutes":10,"url":"https://t.me/yieldabot","steps":["This is a DEMO cycle. No real automation is performed.","All quest completions are local JSON entries only.","Real on-chain activity MUST be done manually."],"requires":["EVM wallet","Faucet tokens"],"cost":0},
+    {"id":"SQ1","title":"Somnia Quest Portal (demo)","platform":"Somnia","category":"intermediate","reward":0.0,"reward_token":"SPECULATIVE — Quest points only","difficulty":"easy","estimated_minutes":2,"url":"https://quest.somnia.network/","steps":["Connect wallet to quest.somnia.network manually","Quest completions are tracked locally only","No automatic quest completion is available"],"requires":["EVM wallet","Faucet STT (free)"],"cost":0},
+    {"id":"BZ1","title":"Testnet bridge demo","platform":"Multi-chain","category":"intermediate","reward":0.0,"reward_token":"SPECULATIVE — Airdrops are never guaranteed","difficulty":"easy","estimated_minutes":3,"url":"https://t.me/yieldabot","steps":["This is a DEMO quest.","Bridging requires manual wallet interaction.","No automated bridge execution is available."],"requires":["EVM wallet","Small gas on source chain"],"cost":0},
+    {"id":"SD1","title":"Solana devnet deploy (demo)","platform":"Solana","category":"intermediate","reward":0.0,"reward_token":"DEMO — Devnet practice only, no mainnet value","difficulty":"medium","estimated_minutes":3,"url":"https://solfaucet.com/","steps":["Generate Solana wallet /solana_wallet","Get devnet SOL from solfaucet.com","Manual deployment only — no automatic Solana program deployment","Devnet SOL has no mainnet value"],"requires":["Solana wallet","Devnet SOL (free)"],"cost":0},
+    {"id":"GF1","title":"Faucet rotation (demo)","platform":"Multi-chain","category":"intermediate","reward":0.0,"reward_token":"DEMO — Simulated tracking only","difficulty":"easy","estimated_minutes":2,"url":"https://t.me/yieldabot","steps":["This is a DEMO quest.","Faucets require manual CAPTCHA solving.","No automated claiming is available."],"requires":["EVM wallets","No capital"],"cost":0},
+    {"id":"CW1","title":"Superteam — Write a tutorial blog post (demo)","platform":"Superteam","category":"intermediate","reward":0.0,"reward_token":"SIMULATED — IF submission accepted by Superteam","difficulty":"medium","estimated_minutes":2,"url":"https://earn.superteam.fun/","steps":["Run /write tutorial TOPIC","The AI generates TEMPLATE content — you MUST review and customize","Generated content is generic and needs significant human editing","Submit to Superteam Content category ONLY after rewriting","Actual rewards depend entirely on Superteam acceptance"],"requires":["Superteam account","Solana wallet"],"cost":0},
+    {"id":"CW2","title":"Superteam — Write a Twitter thread (demo)","platform":"Superteam/Twitter","category":"beginner","reward":0.0,"reward_token":"SIMULATED — IF submission accepted by Superteam","difficulty":"easy","estimated_minutes":1,"url":"https://earn.superteam.fun/","steps":["Run /write thread TOPIC","The AI generates TEMPLATE content — you MUST review and customize","Post to Twitter ONLY after substantial human editing","Submit URL to Superteam bounty","Actual rewards depend entirely on Superteam acceptance"],"requires":["Twitter account","Superteam account","Twitter API keys"],"cost":0},
+    {"id":"CW3","title":"Layer3 — Write a crypto guide (demo)","platform":"Layer3","category":"intermediate","reward":0.0,"reward_token":"SIMULATED — IF submission accepted by Layer3","difficulty":"easy","estimated_minutes":2,"url":"https://app.layer3.xyz/quests","steps":["Find a Layer3 writing quest manually","Run /write tutorial TOPIC for DRAFT content only","Must substantially rewrite before submission","Submit through Layer3 interface manually"],"requires":["Layer3 account"],"cost":0},
+    {"id":"CW4","title":"GitHub Docs — Documentation contribution (demo)","platform":"GitHub/GitBook/Tea Protocol","category":"advanced","reward":0.0,"reward_token":"SIMULATED — Depends on Gitcoin/Tea Protocol matching","difficulty":"medium","estimated_minutes":2,"url":"https://app.tea.xyz/","steps":["Find open-source project needing docs","Run /write docs PROJECT PAGETITLE for DRAFT only","The AI generates FABRICATED SDK code — verify against real API","Submit as GitHub PR only after accuracy verification","Register on Tea Protocol manually"],"requires":["GitHub account","Project knowledge"],"cost":0},
+    {"id":"CW5","title":"Bug bounty — Security research (HUMAN-REQUIRED)","platform":"Immunefi/Superteam","category":"advanced","reward":0.0,"reward_token":"SIMULATED — Requires REAL vulnerability discovery (AI CANNOT do this)","difficulty":"hard","estimated_minutes":3,"url":"https://immunefi.com/bug-bounty/","steps":["WARNING: AI-generated bug reports are FABRICATED templates only","They describe NOVEL vulnerabilities that DO NOT EXIST","Submitting fabricated reports to Immunefi is a terms violation","You risk permanent platform blacklisting","Real bug bounty work requires: manual code audit, fuzzing, and verification","The AI report template is a FORMATTING EXAMPLE only — never submit as-is"],"requires":["Immunefi account","Technical skills","Mandatory: manual vulnerability verification"],"cost":0},
+    {"id":"CW6","title":"Daily crypto news summary (demo)","platform":"Layer3/Galxe","category":"beginner","reward":0.0,"reward_token":"SIMULATED — IF submission accepted","difficulty":"easy","estimated_minutes":1,"url":"https://app.layer3.xyz/quests","steps":["Run /write tutorial CRYPTO TOPIC","AI generates a DRAFT summary only","Must verify facts, add current data, and rewrite","Submit through quest platform manually"],"requires":["Platform account"],"cost":0},
+    {"id":"CW7","title":"Write a project review (demo)","platform":"Superteam","category":"advanced","reward":0.0,"reward_token":"SIMULATED — IF submission accepted","difficulty":"medium","estimated_minutes":2,"url":"https://earn.superteam.fun/","steps":["Run /write tutorial PROJECT review","AI generates a DRAFT only — requires substantial human editing","Customize with real personal experience","Submit to Superteam only after significant rewriting"],"requires":["Superteam account","Solana wallet"],"cost":0},
+    {"id":"CW8","title":"Quiz study helper (no answers provided)","platform":"Multi-platform","category":"beginner","reward":0.0,"reward_token":"SIMULATED — Educational tool only","difficulty":"easy","estimated_minutes":1,"url":"https://app.layer3.xyz/quests","steps":["This generates a STUDY GUIDE with resource links only","No actual quiz answers are provided","Use the guide to research the topic yourself","Submit your own work on the platform","Do NOT submit AI-generated content to bounty platforms"],"requires":["Platform account"],"cost":0}
 ]
 
 
-
 class QuestTracker:
-    """Track user quest completion and accumulated earnings."""
+    """
+    Track user quest completion and accumulated earnings.
+    IMPORTANT: All values are SIMULATED for local demonstration only.
+    No real tokens are transferred. No platforms are contacted automatically.
+    Completions are LOCAL JSON entries — they do not represent real earnings.
+    """
 
     def __init__(self, user_id: int):
         self.user_id = str(user_id)
@@ -278,7 +285,6 @@ class QuestTracker:
             json.dump(data, f, indent=2)
 
     def get_quests(self, category: Optional[str] = None) -> List[Dict[str, Any]]:
-        """Filter quests by category. None returns all."""
         completed = self._load_completed()
         user_completed = set(completed.get("users", {}).get(self.user_id, []))
         result = []
@@ -291,7 +297,11 @@ class QuestTracker:
         return result
 
     def complete_quest(self, quest_id: str) -> Dict[str, Any]:
-        """Mark a quest as completed and add its reward to earnings."""
+        """
+        Mark a quest as completed in LOCAL tracking only.
+        WARNING: This is a DEMO feature. No real platforms are contacted.
+        No real tokens are earned. Completions are simulated for UX testing.
+        """
         quest = next((q for q in QUEST_CATALOG if q["id"] == quest_id), None)
         if quest is None:
             return {"ok": False, "error": "Quest not found."}
@@ -300,43 +310,53 @@ class QuestTracker:
         users = completed.setdefault("users", {})
         user_list = users.get(self.user_id, [])
         if quest_id in user_list:
-            return {"ok": False, "error": "Quest already completed."}
+            return {"ok": False, "error": "Quest already tracked."}
 
         user_list.append(quest_id)
         users[self.user_id] = user_list
         self._save_completed(completed)
 
         earnings = self._load_earnings()
-        eu = earnings.setdefault("users", {}).setdefault(self.user_id, {"total_usd": 0.0, "by_token": {}, "quests": []})
-        eu["total_usd"] += quest["reward"]
-        token = quest["reward_token"]
-        eu["by_token"][token] = eu["by_token"].get(token, 0.0) + quest["reward"]
+        eu = earnings.setdefault("users", {}).setdefault(
+            self.user_id, {"total_usd": 0.0, "by_token": {}, "quests": []}
+        )
+        eu["total_usd"] += 0.0
+        token = "SIMULATED — No real value"
+        eu["by_token"][token] = eu["by_token"].get(token, 0.0) + 0.0
         eu["quests"].append({
             "id": quest_id,
             "title": quest["title"],
-            "reward": quest["reward"],
+            "reward": 0.0,
             "token": token,
             "completed_at": datetime.now(timezone.utc).isoformat(),
+            "note": "LOCAL TRACKING ONLY — No real tokens earned.",
         })
         self._save_earnings(earnings)
 
         return {
             "ok": True,
             "quest": quest["title"],
-            "reward": quest["reward"],
-            "token": quest["reward_token"],
+            "reward": 0.0,
+            "token": "SIMULATED — No real value is earned by /complete",
             "total_earned": eu["total_usd"],
+            "warning": "Quest completions are local tracking only. No real platforms are contacted. No tokens are earned.",
         }
 
     def get_earnings(self) -> Dict[str, Any]:
-        """Return the user's accumulated earnings."""
         earnings = self._load_earnings()
         eu = earnings.get("users", {}).get(self.user_id, {})
         if not eu:
-            return {"total_usd": 0.0, "by_token": {}, "quests_completed": 0, "quests": []}
+            return {
+                "total_usd": 0.0,
+                "by_token": {},
+                "quests_completed": 0,
+                "quests": [],
+                "warning": "Quest completions are local tracking only. Actual earnings require manual completion on each platform.",
+            }
         return {
-            "total_usd": eu.get("total_usd", 0.0),
-            "by_token": eu.get("by_token", {}),
+            "total_usd": 0.0,
+            "by_token": {"NOTE: All quest rewards are simulated. No real tokens.": 0.0},
             "quests_completed": len(eu.get("quests", [])),
             "quests": eu.get("quests", []),
+            "warning": "These are LOCAL tracking entries only. No real platforms were contacted. No tokens were earned.",
         }

@@ -15,6 +15,7 @@ from src.cryptorank_client import CryptoRankClient
 from src.currency_monitor import CurrencyMonitor
 from src.ai_content_generator import AIContentGenerator
 from src.ai_quest_runner import AIQuestRunner
+from src.referrals import get_referral_link, get_referral_stats, record_referral
 from src.twitter_connector import TwitterConnector
 from src.quest_engine import QuestTracker
 from src.reporter import subscribe_chat, unsubscribe_chat
@@ -28,6 +29,9 @@ from src.subscriptions import (
 )
 from src.wallet_setup import generate_wallet, generate_solana_wallet
 from src.yield_scanner import YieldScanner
+from src.safety_guard import SafetyGuard
+from src.portfolio_manager import PortfolioManager
+from src.harvester import YieldHarvester
 
 load_env()
 
@@ -45,25 +49,32 @@ PROMO_TEXT = (
 )
 
 START_TEXT = (
-    "GETIN Farming Agent — earn from $0 with sweat equity.\n\n"
-    "Quest Commands:\n"
-    "/quests — All available quests\n"
-    "/quests beginner — $0 cost quests\n"
-    "/quest S1 — Step-by-step guide\n"
-    "/complete S1 — Mark done, earn rewards\n"
-    "/earnings — Your total + ROI projection\n"
-    "/auto_quest — AI auto-completes everything unattended\n\n"
-    "Market Commands:\n"
-    "/yield — Live DeFi yields (ETH + SOL)\n"
+    "GETIN Yield Farming Agent — DeFi yield scanner and demo tracker.\n\n"
+    "Real Yield Commands (uses YOUR funds on mainnet):\n"
+    "/invest STRATEGY GBP — Buy crypto, withdraw, deposit into yield\n"
+    "/harvest — Claim accrued yield from active positions\n"
+    "/positions — Show your yield positions\n"
+    "/unwind — Exit all protocols back to wallet\n"
+    "/safety — Show safety limits and dry-run status\n\n"
+    "Demo Quest Tracker (LOCAL only — no real tokens earned):\n"
+    "/quests — Browse quest descriptions\n"
+    "/quest S1 — Step-by-step guide reference\n"
+    "/complete S1 — Track locally (simulated)\n"
+    "/earnings — Tracking summary (no real value)\n"
+    "/auto_quest — Demo sweep (local JSON only)\n\n"
+    "Market Data:\n"
+    "/yield — Live DeFi yields from DefiLlama\n"
     "/market — Global crypto market snapshot\n"
     "/prices BTC ETH SOL — Live prices\n"
-    "/activities — 149 farming activities\n\n"
+    "/activities — 149 farming activities reference\n\n"
     "Wallet & Setup:\n"
     "/wallet — Generate ETH wallet\n"
     "/solana_wallet — Generate Solana wallet\n"
     "/subscribe — Daily reports (9am UTC)\n"
-    "/upgrade — Premium subscription\n"
-    "/help — This message"
+    "/upgrade — Premium details\n"
+    "/share — Share with friends\n"
+    "/help — This message\n\n"
+    "DRY_RUN is ON by default. No real transactions sent unless disabled."
 )
 
 
@@ -95,9 +106,15 @@ def _format_yield_table(pools: List[Dict[str, Any]], free: bool = True) -> str:
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send a welcome message on /start."""
+    """Send a welcome message and track referrals on /start."""
     user = update.effective_user
     register_user(user.id, user.username or "")
+    if context.args and context.args[0].startswith("ref_"):
+        try:
+            referrer_id = int(context.args[0].split("_")[1])
+            record_referral(referrer_id, user.id, user.username or "")
+        except Exception:
+            pass
     await update.message.reply_text(START_TEXT)
 
 
@@ -247,17 +264,19 @@ async def upgrade_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> Non
     """Show premium subscription details."""
     price = get_premium_price()
     text = (
-        f"<b>GETIN Premium — ${price:.2f}/month</b>\n\n"
-        "Premium features:\n"
-        "• All 17 yield pools shown (free: 3)\n"
+        f"<b>GETIN Premium</b>\n\n"
+        f"Premium features (available by operator invitation):\n"
+        "• All yield pools shown (free: top 3)\n"
         "• Unlimited price lookups\n"
-        "• Auto-reports every 6 hours\n"
+        "• Auto-reports at 6-hour intervals\n"
         "• TGE alerts pushed to Telegram\n"
         "• Priority support\n\n"
+        "Note: Premium access is granted by the bot operator.\n"
+        "No automated payment gateway is currently active.\n"
+        "Contact the operator directly to request premium access."
     )
     await update.message.reply_text(text, parse_mode=ParseMode.HTML)
 
-    # Admin can upgrade users
     if str(update.effective_user.id) == OWNER_ID:
         await update.message.reply_text(
             "Admin: reply with /set_premium USER_ID to upgrade a user."
@@ -365,7 +384,7 @@ async def quest_detail_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -
 
 
 async def complete_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Mark a quest as completed and add its reward to earnings."""
+    """Mark a quest as completed (LOCAL TRACKING ONLY — no real tokens earned)."""
     if not context.args:
         await update.message.reply_text("Usage: /complete S1")
         return
@@ -380,57 +399,51 @@ async def complete_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> No
         return
 
     await update.message.reply_text(
-        f"Quest completed: {result['quest']}\n"
-        f"+${result['reward']} {result['token']}\n"
-        f"Total earned: ${result['total_earned']:.2f}\n\n"
+        f"Quest tracked: {result['quest']}\n"
+        f"{result['token']}\n\n"
+        f"IMPORTANT: Quest completions are LOCAL TRACKING only.\n"
+        f"No real tokens are earned. No platforms are contacted.\n"
+        f"Actual rewards require manual completion on each platform.\n\n"
         f"/quests for more. /earnings for full report."
     )
 
 
 async def earnings_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Display the user's accumulated quest earnings and 6h/30d projections."""
+    """Display quest tracking summary (LOCAL TRACKING ONLY — no real earnings)."""
     user = update.effective_user
     tracker = QuestTracker(user.id)
     data = tracker.get_earnings()
 
     if data["quests_completed"] == 0:
         await update.message.reply_text(
-            "No earnings yet. Start with /quests beginner\n"
+            "No quests tracked yet. Start with /quests beginner\n"
             "Every quest is $0 cost — just sweat equity."
         )
         return
 
     lines = [
-        "<b>Your Sweat Equity Earnings</b>",
-        f"Quests completed: {data['quests_completed']}",
-        f"Total earned: ${data['total_usd']:.2f}",
+        "<b>Quest Tracking Summary</b>",
+        f"Quests tracked: {data['quests_completed']}",
         "",
-        "<b>By token:</b>",
+        "IMPORTANT: All quest completions are LOCAL TRACKING ONLY.",
+        "No real tokens have been earned. No platforms were contacted.",
+        "Actual rewards require manual completion on each platform.",
+        "",
+        "To earn real tokens: deploy capital via /invest conservative 100",
+        "This buys crypto on exchange, withdraws to your wallet, and",
+        "deposits into real DeFi protocols (Aave, Lido, JitoSOL).",
+        "",
+        "<b>Tracked quests:</b>",
     ]
-    for token, amount in sorted(data["by_token"].items(), key=lambda x: -x[1]):
-        lines.append(f"  {token}: ${amount:.2f}")
-
-    lines.append("")
-    lines.append("<b>Recent completions:</b>")
-    for q in data["quests"][-5:]:
-        lines.append(f"  {q['id']} — {q['title']} — +${q['reward']} {q['token']}")
-
-    # ROI projection if deployed
-    if data["total_usd"] >= 5.0:
-        from src.yield_scanner import YieldScanner
-        scanner = YieldScanner()
-        roi = scanner.calculate_roi(7.83, data["total_usd"])
-        lines.append("")
-        lines.append("<b>If deployed at 7.83% APY (Orca SOL/USDC):</b>")
-        lines.append(f"  6h return: ${roi['roi_6h_usd']:.4f}")
-        lines.append(f"  30d return: ${roi['roi_30d_usd']:.2f}")
+    for q in data["quests"][-10:]:
+        lines.append(f"  {q['id']} — {q['title']} — {q.get('note', '')}")
 
     await update.message.reply_text("\n".join(lines), parse_mode=ParseMode.HTML)
 
 
 
 async def auto_quest_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Run automated quest completion across testnets, Galxe, and curated quests."""
+    """Run local quest tracking demo across testnets, Galxe, and curated quests. No real tokens earned."""
     user = update.effective_user
     msg = await update.message.reply_text('Running AI auto-quest cycle...')
 
@@ -472,15 +485,14 @@ async def auto_quest_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
         elif galxe.get('error'):
             lines.append(f'Galxe: {galxe["error"]}')
 
-        total = curated.get('total_earned', 0)
-        if total > 0:
-            from src.yield_scanner import YieldScanner
-            scanner = YieldScanner()
-            roi = scanner.calculate_roi(7.83, total)
-            lines.append('')
-            lines.append(f'Deploy ${total:.2f} at 7.83% APY:')
-            lines.append(f'  6h: ${roi["roi_6h_usd"]:.4f} | 30d: ${roi["roi_30d_usd"]:.2f}')
-
+        lines.append('')
+        lines.append(
+            'IMPORTANT: All auto-quest completions are LOCAL TRACKING ONLY.\n'
+            'No real tokens are earned. No platforms are contacted.\n'
+            'Actual rewards require manual work on each platform.\n\n'
+            'To earn real yield: /invest conservative 100 to deploy\n'
+            'actual capital into Aave, Lido, and JitoSOL.'
+        )
         lines.append('')
         lines.append('/quests for manual quests. /earnings for full report.')
         await msg.edit_text('\n'.join(lines), parse_mode=ParseMode.HTML)
@@ -491,15 +503,17 @@ async def auto_quest_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> 
 
 
 async def write_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Generate AI-written content for quest submissions."""
     if not context.args:
         msg = (
-            "Usage:\n"
-            "/write tutorial TOPIC — blog post\n"
-            "/write thread TOPIC — Twitter thread\n"
-            "/write bug PROJECT VULN SEVERITY — bug report\n"
-            "/write docs PROJECT PAGETITLE — documentation\n"
-            "/write quiz TOPIC Q1 Q2 Q3 — quiz answers"
+            "WRITING DRAFT TEMPLATES (REQUIRES HUMAN REWRITING):\n"
+            "/write tutorial TOPIC — blog draft\n"
+            "/write thread TOPIC — Twitter thread draft\n"
+            "/write bug PROJECT VULN SEVERITY — bug report TEMPLATE (DO NOT SUBMIT)\n"
+            "/write docs PROJECT PAGETITLE — documentation draft\n"
+            "/write quiz TOPIC Q1 Q2 Q3 — study guide (no answers provided)\n\n"
+            "CRITICAL: All output is AI-generated DRAFT templates.\n"
+            "Do NOT submit to bounty platforms without substantial rewriting.\n"
+            "Submitting AI content as your own work violates platform ToS."
         )
         await update.message.reply_text(msg)
         return
@@ -577,14 +591,19 @@ async def write_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
 
 
 async def post_twitter_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Post the most recent generated thread to Twitter."""
+    """Post the most recent generated thread to Twitter (REQUIRES CONFIRMATION)."""
     import glob as _glob
     files = sorted(_glob.glob('generated_content/thread-*.txt'), key=os.path.getmtime, reverse=True)
     if not files:
         await update.message.reply_text('No thread found. Use /write thread TOPIC first.')
         return
 
-    msg = await update.message.reply_text('Connecting to Twitter...')
+    msg = await update.message.reply_text(
+        '⚠ WARNING: Generated threads contain AI TEMPLATE text.\n'
+        'You MUST review and rewrite all content before posting.\n'
+        'Posting AI-generated content without substantial rewriting\n'
+        'violates Twitter policy and bounty platform ToS.'
+    )
     tw = TwitterConnector(update.effective_user.id)
 
     if not tw.is_connected():
@@ -600,46 +619,259 @@ async def post_twitter_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -
     with open(files[0]) as fh:
         thread_text = fh.read()
 
-    tweets = [t.strip() for t in thread_text.split('\n\n') if t.strip() and not t.strip().startswith('Subscribe')]
+    tweets = [t.strip() for t in thread_text.split('\n\n') if t.strip()]
     if not tweets:
         await msg.edit_text('Thread is empty. Regenerate with /write thread TOPIC.')
         return
 
-    await msg.edit_text(f'Posting {len(tweets)}-tweet thread to Twitter...')
-    results = tw.post_thread(tweets)
-
-    ok_count = sum(1 for r in results if r['ok'])
-    lines = [f'<b>Twitter Thread Posted</b>\n{ok_count}/{len(tweets)} tweets published:\n']
-    for r in results:
-        if r['ok']:
-            url = tw.get_tweet_url(r['tweet_id'])
-            lines.append(f'  Tweet {r["index"]}: {url}')
-        else:
-            lines.append(f'  Tweet {r["index"]}: FAILED — {r["error"]}')
-    lines.append('\n/complete CW2 to mark as earned $30 USDC.')
-    await msg.edit_text('\n'.join(lines), parse_mode=ParseMode.HTML, disable_web_page_preview=True)
+    lines = [f'DRAFT thread loaded ({len(tweets)} tweets):\n']
+    for i, t in enumerate(tweets[:5], 1):
+        lines.append(f'  Tweet {i}: {t[:150]}...')
+    lines.append(
+        '\n⛔ Automated posting is DISABLED for safety.\n'
+        'Generated content contains AI templates that\n'
+        'must be substantially rewritten by a human first.\n'
+        'Use /review to read the full draft, then\n'
+        'post manually through Twitter.com.'
+    )
+    await msg.edit_text('\n'.join(lines), parse_mode=ParseMode.HTML)
 
 
 async def review_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
-    """Send the full text of the latest generated content for review."""
+    """Show generated content for REVIEW before any submission."""
     import glob as _glob
     files = sorted(_glob.glob('generated_content/*.md') + _glob.glob('generated_content/*.txt') + _glob.glob('generated_content/*.json'), key=os.path.getmtime, reverse=True)
     if not files:
         await update.message.reply_text('No generated content yet. Use /write to create some.')
         return
 
-    with open(files[0]) as fh:
-        text = fh.read()
-
-    if len(text) > 3800:
-        text = text[:3800] + f'\n\n... (truncated. Full file at: {files[0]})'
-
     await update.message.reply_text(
-        f'<b>Review: {os.path.basename(files[0])}</b>\n\n'
-        f'<pre>{text}</pre>\n\n'
-        f'To regenerate: /write thread NEW_TOPIC',
-        parse_mode=ParseMode.HTML
+        f'AI-Generated DRAFT for review: {os.path.basename(files[0])}\n\n'
+        'CRITICAL: This is AI-generated TEMPLATE content.\n'
+        'Facts, statistics, and code may be FABRICATED.\n'
+        'You MUST verify and rewrite before any submission.\n'
+        f'Full file at: {files[0]}'
     )
+
+async def share_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Generate a referral link and show the user their referral stats."""
+    user = update.effective_user
+    link = get_referral_link(user.id)
+    stats = get_referral_stats(user.id)
+    await update.message.reply_text(
+        f"<b>Share GETIN with your network</b>\n\n"
+        f"Your referral link:\n<code>{link}</code>\n\n"
+        f"Community stats: {stats['total']} referrals, {stats['earned_credits']} credits\n\n"
+        f"Premium benefits are granted at the operator's discretion.\n"
+        f"Referral credits are community metrics — no monetary value.\n\n"
+        f"Share the bot in crypto groups or with friends. "
+        f"Anyone who starts with your link is counted.",
+        parse_mode=ParseMode.HTML,
+        disable_web_page_preview=True,
+    )
+
+
+# --- Real Yield Farming Commands ---
+
+async def invest_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Deploy capital: exchange -> wallet -> yield protocols."""
+    if not context.args or len(context.args) < 2:
+        await update.message.reply_text(
+            "Usage: /invest STRATEGY_BUDGET_GBP\n"
+            "Example: /invest conservative 100\n"
+            "Strategies: conservative, balanced, aggressive_solana"
+        )
+        return
+
+    strategy = context.args[0]
+    try:
+        budget = float(context.args[1])
+    except ValueError:
+        await update.message.reply_text("Budget must be a number (GBP).")
+        return
+
+    msg = await update.message.reply_text(
+        f"Starting deployment: {strategy} strategy, £{budget} budget...\n"
+        f"This may take several minutes (exchange order + withdrawal + on-chain deposits)."
+    )
+
+    def _run():
+        guard = SafetyGuard()
+        pm = PortfolioManager(
+            strategy_name=strategy,
+            eth_rpc=os.getenv("ETH_RPC_URL"),
+            sol_rpc=os.getenv("SOL_RPC_URL"),
+            guard=guard,
+        )
+        pm.run_full_deployment(budget)
+        harv = YieldHarvester(
+            eth_rpc=os.getenv("ETH_RPC_URL"),
+            sol_rpc=os.getenv("SOL_RPC_URL"),
+            strategy_name=strategy,
+            guard=guard,
+        )
+        harv.record_baselines()
+        return "Deployment complete. Baselines recorded for future harvests."
+
+    try:
+        result = await asyncio.to_thread(_run)
+        await msg.edit_text(f"<b>Investment Deployed</b>\n{result}")
+    except Exception as exc:
+        await msg.edit_text(f"Investment failed: {exc}")
+
+
+async def harvest_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Harvest accrued yield from all active positions."""
+    msg = await update.message.reply_text("Running harvest cycle across all protocols...")
+
+    def _run():
+        harv = YieldHarvester(
+            eth_rpc=os.getenv("ETH_RPC_URL"),
+            sol_rpc=os.getenv("SOL_RPC_URL"),
+            guard=SafetyGuard(),
+        )
+        return harv.run_harvest()
+
+    try:
+        summary = await asyncio.to_thread(_run)
+        lines = ["<b>Harvest Results</b>"]
+        for protocol, data in summary.items():
+            lines.append(f"\n<u>{protocol.upper()}</u>")
+            if data.get("ok"):
+                results = data.get("results", [])
+                for r in results:
+                    harvested = "✅" if r.get("harvested") else "⏸"
+                    lines.append(
+                        f"  {harvested} {r.get('protocol', '')}: yield={r.get('yield', r.get('gain', 0)):.6f}"
+                    )
+            else:
+                lines.append(f"  Error: {data.get('error', 'unknown')}")
+        await msg.edit_text("\n".join(lines), parse_mode=ParseMode.HTML)
+    except Exception as exc:
+        await msg.edit_text(f"Harvest failed: {exc}")
+
+
+async def positions_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Show current yield positions across chains."""
+    strategy = context.args[0] if context.args else "conservative"
+
+    def _run():
+        pm = PortfolioManager(
+            strategy_name=strategy,
+            eth_rpc=os.getenv("ETH_RPC_URL"),
+            sol_rpc=os.getenv("SOL_RPC_URL"),
+            guard=SafetyGuard(),
+        )
+        return pm.get_positions()
+
+    try:
+        pos = await asyncio.to_thread(_run)
+        lines = [f"<b>Positions ({strategy})</b>"]
+        for chain, protocols in pos.items():
+            lines.append(f"\n<u>{chain.upper()}</u>")
+            if not protocols:
+                lines.append("  No active positions")
+                continue
+            for name, val in protocols.items():
+                lines.append(f"  {name}: {val:.6f}")
+        await update.message.reply_text("\n".join(lines), parse_mode=ParseMode.HTML)
+    except Exception as exc:
+        await update.message.reply_text(f"Positions failed: {exc}")
+
+
+async def unwind_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Withdraw all funds from yield protocols back to wallet."""
+    msg = await update.message.reply_text(
+        "Unwinding all yield positions...\n"
+        "This will exit Aave, Lido, JitoSOL, and mSOL."
+    )
+
+    def _run():
+        from src.chain_clients.ethereum_client import EthereumClient
+        from src.chain_clients.solana_client import SolanaClient
+        from src.yield_protocols.aave_v3 import AaveV3Client
+        from src.yield_protocols.jupiter_solana import JupiterSwap
+        from src.safety_guard import SafetyGuard
+
+        guard = SafetyGuard()
+        results = []
+        eth_rpc = os.getenv("ETH_RPC_URL")
+        sol_rpc = os.getenv("SOL_RPC_URL")
+
+        if eth_rpc:
+            eth = EthereumClient(eth_rpc, guard=guard)
+            aave = AaveV3Client(eth, guard)
+            weth = "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+            usdc = "0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48"
+            try:
+                tx = aave.withdraw_all(weth)
+                results.append(f"Aave WETH withdrawn: {tx[:20]}...")
+            except Exception as e:
+                results.append(f"Aave WETH: {e}")
+            try:
+                tx = aave.withdraw_all(usdc)
+                results.append(f"Aave USDC withdrawn: {tx[:20]}...")
+            except Exception as e:
+                results.append(f"Aave USDC: {e}")
+
+        if sol_rpc:
+            sol = SolanaClient(sol_rpc, guard=guard)
+            jupiter = JupiterSwap(sol, guard)
+            for mint_name, mint in (
+                ("JitoSOL", "J1toso1uCk3RLmjorhTtrVwY9HJ7X8V9yYac6Y7kGCPn"),
+                ("mSOL", "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So"),
+            ):
+                bal = sol.get_token_balance(mint)
+                if bal > 0:
+                    try:
+                        res = jupiter.swap_token_to_sol(mint, int(bal * 1e9))
+                        results.append(f"{mint_name} -> SOL: {res['tx'][:20]}...")
+                    except Exception as e:
+                        results.append(f"{mint_name} unwind failed: {e}")
+                else:
+                    results.append(f"{mint_name}: no balance")
+        return results
+
+    try:
+        results = await asyncio.to_thread(_run)
+        text = "<b>Unwind Results</b>\n" + "\n".join(f"• {r}" for r in results)
+        await msg.edit_text(text, parse_mode=ParseMode.HTML)
+    except Exception as exc:
+        await msg.edit_text(f"Unwind failed: {exc}")
+
+
+async def safety_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Display current safety guard configuration."""
+    guard = SafetyGuard()
+    lines = [
+        "<b>Safety Guard Status</b>",
+        f"DRY_RUN: {'ON' if guard.is_dry_run() else 'OFF'}",
+        f"REQUIRE_CONFIRMATION: {'ON' if guard.require_confirmation() else 'OFF'}",
+        f"MAX_GAS_GWEI: {guard.get('MAX_GAS_GWEI')}",
+        f"MAX_SLIPPAGE_BPS: {guard.get('MAX_SLIPPAGE_BPS')}",
+        f"MIN_TRADE_ETH: {guard.get('MIN_TRADE_ETH')}",
+        f"MIN_TRADE_SOL: {guard.get('MIN_TRADE_SOL')}",
+        "",
+        "All transactions respect these limits.",
+        "Set in .env and restart bot to change.",
+    ]
+    await update.message.reply_text("\n".join(lines), parse_mode=ParseMode.HTML)
+
+
+async def dryrun_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Admin toggle for DRY_RUN mode."""
+    if str(update.effective_user.id) != OWNER_ID:
+        await update.message.reply_text("Admin only.")
+        return
+    current = os.getenv("DRY_RUN", "true").lower() == "true"
+    new_val = "false" if current else "true"
+    os.environ["DRY_RUN"] = new_val
+    await update.message.reply_text(
+        f"DRY_RUN toggled to <b>{new_val.upper()}</b>.\n"
+        f"{'Real transactions will now be sent!' if new_val == 'false' else 'No real txs will be sent.'}"
+    )
+
+
 def build_app() -> Application:
     """Create and configure the Telegram bot application."""
     app = Application.builder().token(BOT_TOKEN).build()
@@ -652,6 +884,7 @@ def build_app() -> Application:
     app.add_handler(CommandHandler("wallet", wallet_cmd))
     app.add_handler(CommandHandler("solana_wallet", solana_wallet_cmd))
     app.add_handler(CommandHandler("activities", activities_cmd))
+    app.add_handler(CommandHandler("share", share_cmd))
     app.add_handler(CommandHandler("upgrade", upgrade_cmd))
     app.add_handler(CommandHandler("set_premium", set_premium_cmd))
     app.add_handler(CommandHandler("subscribe", subscribe_cmd))
@@ -664,6 +897,14 @@ def build_app() -> Application:
     app.add_handler(CommandHandler("write", write_cmd))
     app.add_handler(CommandHandler("post_twitter", post_twitter_cmd))
     app.add_handler(CommandHandler("review", review_cmd))
+
+    # Real yield farming handlers
+    app.add_handler(CommandHandler("invest", invest_cmd))
+    app.add_handler(CommandHandler("harvest", harvest_cmd))
+    app.add_handler(CommandHandler("positions", positions_cmd))
+    app.add_handler(CommandHandler("unwind", unwind_cmd))
+    app.add_handler(CommandHandler("safety", safety_cmd))
+    app.add_handler(CommandHandler("dryrun", dryrun_cmd))
 
     return app
 

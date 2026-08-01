@@ -1,5 +1,8 @@
 .env
 wallets/*.env
+wallets/*_mnemonic.txt
+wallets/*.json
+wallets/_pytest_*
 __pycache__/
 *.pyc
 activity_log.jsonl
@@ -8,3 +11,13 @@ ranked_watchlist.json
 tge_alerted.json
 venv/
 subscribers.json
+report_chats.json
+earnings.json
+completed_quests.json
+auto_quest_log.json
+referrals.json
+twitter_tokens/
+portfolio_actions.jsonl
+harvest_log.jsonl
+positions.json
+generated_content/

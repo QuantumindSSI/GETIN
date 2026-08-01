@@ -1,35 +1,4 @@
 {
-  "users": {
-    "6116504708": [
-      "S1",
-      "L1",
-      "G1",
-      "S2",
-      "L2",
-      "M1",
-      "B1",
-      "S3",
-      "L3",
-      "A1",
-      "GQ1",
-      "ZF1",
-      "MO1",
-      "BR1",
-      "SM1",
-      "AQ1",
-      "CV1",
-      "GR1",
-      "TP1",
-      "TP2",
-      "GL1",
-      "GL2",
-      "ZB1",
-      "ZB2",
-      "MS1",
-      "SQ1",
-      "BZ1",
-      "SD1",
-      "GF1"
-    ]
-  }
+  "users": {},
+  "note": "Quest completions are LOCAL TRACKING ONLY for demonstration. No real platforms are contacted. No real value is earned."
 }
