@@ -21,3 +21,5 @@ portfolio_actions.jsonl
 harvest_log.jsonl
 positions.json
 generated_content/
+logs/
+*.log
