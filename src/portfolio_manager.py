@@ -206,6 +206,24 @@ class PortfolioManager:
         eth_weight = sum(eth_alloc.values()) / 100
         sol_weight = sum(sol_alloc.values()) / 100
 
+        # ── AI sanitisation of portfolio action ──
+        from src.ai_sanitizer import get_ai_sanitizer
+        ai = get_ai_sanitizer()
+        pfolio = ai.sanitise_portfolio_action(
+            strategy=self.strategy.get("name", "conservative"),
+            budget_gbp=gbp_budget,
+            action_type="invest",
+            eth_pct=eth_weight * 100,
+            sol_pct=sol_weight * 100,
+        )
+        if not pfolio.is_safe:
+            raise SafetyError(f"AI portfolio check failed: {pfolio.warnings}")
+        for w in pfolio.warnings:
+            print(f"[AI WARNING] {w}")
+
+        eth_weight = sum(eth_alloc.values()) / 100
+        sol_weight = sum(sol_alloc.values()) / 100
+
         # Estimate GBP split (very rough, in practice we'd fetch prices)
         eth_gbp = gbp_budget * eth_weight
         sol_gbp = gbp_budget * sol_weight

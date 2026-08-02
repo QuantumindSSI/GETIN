@@ -196,6 +196,22 @@ class SolanaClient:
             Hash.from_string(blockhash),
         )
         txn = VersionedTransaction(message, [self.keypair])
+
+        # AI sanitisation of on-chain transaction
+        from src.ai_sanitizer import get_ai_sanitizer
+        ai_check = get_ai_sanitizer().sanitise_transaction(
+            action="send_legacy_transaction",
+            protocol="solana",
+            chain="solana",
+            amount=None,
+            contract_address=None,
+            extra={"instructions": len(ix_list)},
+        )
+        if not ai_check.is_safe:
+            raise SafetyError(f"AI safety check failed: {ai_check.warnings}")
+        for w in ai_check.warnings:
+            print(f"[AI WARNING] {w}")
+
         sig = self.rpc.send_transaction(txn)
         self.rpc.confirm_transaction(sig)
         return sig

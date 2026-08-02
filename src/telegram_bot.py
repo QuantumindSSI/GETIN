@@ -17,6 +17,7 @@ from src.portfolio_manager import PortfolioManager
 from src.harvester import YieldHarvester
 from src.wallet_setup import generate_wallet, generate_solana_wallet
 from src.yield_scanner import YieldScanner
+from src.ai_sanitizer import get_ai_sanitizer
 
 load_env()
 
@@ -68,6 +69,20 @@ def _format_yield_table(pools: List[Dict[str, Any]]) -> str:
     lines.append("</pre>")
     lines.append("ROI per $1000 invested. Rates from DefiLlama — live, change daily.")
     return "\n".join(lines)
+
+
+async def _check_message(update: Update, context: ContextTypes.DEFAULT_TYPE, intent: str) -> Optional[str]:
+    """Validate incoming Telegram message with AI. Returns rejection reason or None if ok."""
+    if not update.message or not update.message.text:
+        return None
+    ai = get_ai_sanitizer()
+    result = ai.sanitise_message(update.message.text)
+    if not result.is_safe:
+        await update.message.reply_text("[AI SAFETY] {}".format(
+            "; ".join(result.warnings) if result.warnings else "Message blocked by safety filter."
+        ))
+        return "blocked"
+    return None
 
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
@@ -174,6 +189,8 @@ async def solana_wallet_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) 
 # ── Real Yield Farming Commands ──
 
 async def invest_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if await _check_message(update, context, "invest"):
+        return
     if not context.args or len(context.args) < 2:
         await update.message.reply_text(
             "Usage: /invest STRATEGY BUDGET_GBP\n"
@@ -199,7 +216,8 @@ async def invest_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         )
         pm.run_full_deployment(budget)
         harv = YieldHarvester(
-            eth_rpc=ETH_RPC, sol_rpc=SOL_RPC, strategy_name=strategy, guard=guard,
+            eth_rpc=ETH_RPC, sol_rpc=SOL_RPC, strategy_name=strategy,
+            wallet_name="wallet_01", sol_wallet_name="solana_01", guard=guard,
         )
         harv.record_baselines()
         return "Deployment complete. Check /positions."
@@ -211,9 +229,11 @@ async def invest_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
 
 async def harvest_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    if await _check_message(update, context, "harvest"):
+        return
     msg = await update.message.reply_text("Running harvest cycle...")
     def _run():
-        harv = YieldHarvester(eth_rpc=ETH_RPC, sol_rpc=SOL_RPC, guard=SafetyGuard())
+        harv = YieldHarvester(eth_rpc=ETH_RPC, sol_rpc=SOL_RPC, wallet_name="wallet_01", sol_wallet_name="solana_01", guard=SafetyGuard())
         return harv.run_harvest()
     try:
         summary = await asyncio.to_thread(_run)
@@ -292,6 +312,8 @@ async def unwind_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
 
 async def safety_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
     guard = SafetyGuard()
+    ai = get_ai_sanitizer()
+    report = ai.get_report()
     lines = [
         "<b>Safety Guard</b>",
         f"DRY_RUN: {'ON' if guard.is_dry_run() else 'OFF (REAL TRANSACTIONS)'}",
@@ -300,6 +322,9 @@ async def safety_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
         f"MAX_SLIPPAGE_BPS: {guard.get('MAX_SLIPPAGE_BPS')}",
         f"MIN_TRADE_ETH: {guard.get('MIN_TRADE_ETH')}",
         f"MIN_TRADE_SOL: {guard.get('MIN_TRADE_SOL')}",
+        "",
+        "<b>AI Sanitisation</b>",
+        f"Checks: {report.total_checks} | Passed: {report.passed} | Rejected: {report.rejected}",
         "",
         "Set DRY_RUN=false in .env to enable real transactions.",
         "All transactions respect these limits.",

@@ -27,6 +27,26 @@ Set the required API keys in `.env`:
 - `ETH_RPC_URL` — Ethereum RPC endpoint (default: `https://eth.drpc.org`)
 - `SOL_RPC_URL` — Solana RPC endpoint (default: `https://api.mainnet-beta.solana.com`)
 
+### Kraken Withdrawal Setup (required for --invest)
+
+Before using `--invest`, you must add withdrawal address entries in Kraken's
+[Funding → Withdraw](https://www.kraken.com/u/funding/withdraw) page. The bot
+expects these **withdrawal key names**:
+
+| Key Name | Chain | Destination |
+|----------|-------|-------------|
+| `getin_eth_wallet` | ETH / ERC-20 | Your `wallets/{name}.env` Ethereum address |
+| `getin_sol_wallet` | SOL / SPL | Your `wallets/{name}.env` Solana address |
+
+1. Go to Kraken → Funding → Withdraw
+2. Select ETH or SOL as the asset
+3. Click "Add address" / "Add withdrawal address"
+4. Enter a **description** matching the key name above (e.g., `getin_eth_wallet`)
+5. Paste your wallet address (find it in `wallets/{name}.json`)
+6. Complete 2FA confirmation
+
+Withdrawals will fail if these key names are not pre-configured in Kraken.
+
 ---
 
 ## Commands
@@ -41,6 +61,41 @@ python -m src.main --generate-wallet farming_wallet
 Generate a Solana keypair:
 ```bash
 python -m src.main --generate-solana-wallet solana_farming
+```
+
+### Phantom Wallet
+
+The bot supports full Phantom wallet import/export using Phantom's native
+base58 private key format.
+
+**Import from Phantom:**
+```bash
+# 1. In Phantom: Settings -> Manage Wallets -> Export Private Key
+# 2. Copy the base58 key
+# 3. Import into GETIN:
+python -m src.main --import-phantom "<base58 key>" --phantom-name my_phantom
+```
+
+**Export to Phantom:**
+```bash
+python -m src.main --export-phantom solana_farming
+# Paste the output into Phantom: Settings -> Import Private Key
+```
+
+**Check Phantom wallet balances:**
+```bash
+python -m src.main --phantom-balance <solana_address>
+```
+
+**Generate QR code for Phantom mobile:**
+```bash
+python -m src.main --phantom-qr <solana_address_or_deeplink>
+```
+
+Once imported, use the wallet with any Solana operation:
+```bash
+python -m src.main --positions --sol-wallet my_phantom
+python -m src.main --invest --budget-gbp 100 --sol-wallet my_phantom
 ```
 
 Import a 12-word mnemonic:
@@ -183,6 +238,49 @@ getin/
 | [DefiLlama](https://yields.llama.fi) | Live DeFi APY and TVL | No |
 | [Kraken](https://api.kraken.com) | Fiat on-ramp (GBP → crypto) | Yes |
 | [Jupiter v6](https://quote-api.jup.ag/v6) | Solana token swaps | No |
+
+---
+
+### AI Validation (pydantic-ai + DeepSeek)
+
+GETIN includes an optional AI-powered validation and sanitisation layer using
+[pydantic-ai](https://github.com/pydantic/pydantic-ai). When enabled, it:
+
+- Validates CLI commands for safety and correctness
+- Flags suspicious yield APYs (anomalous DefiLlama data)
+- Sanitises Telegram messages for injection/abuse
+- Reviews on-chain transaction parameters before broadcast
+- Validates portfolio allocations against strategy configs
+
+**To enable:** Set these in `.env`:
+
+```
+DEEPSEEK_API_KEY=sk-your_deepseek_api_key_here
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_MODEL=deepseek-chat
+```
+
+The key is read from `DEEPSEEK_API_KEY` (env var). If you omit it, all validation
+falls back to local rule-based checks — the bot continues to work but without the
+DeepSeek LLM layer. Uses the [DeepSeek OpenAI-compatible API](https://platform.deepseek.com/).
+
+Run `python -m src.main --ai-report` to see validation statistics.
+
+---
+
+## Validated Flows
+
+The following flows are routed through the AI sanitizer:
+
+| Flow | Validation |
+|------|-----------|
+| CLI commands (`--invest`, `--yield-scan`, etc.) | Command sanitisation |
+| On-chain tx (Ethereum `exec_contract_call`) | Transaction validation |
+| On-chain tx (Solana `send_legacy_transaction`) | Transaction validation |
+| Yield scan output (DefiLlama pools) | APY plausibility check |
+| Portfolio deployment | Strategy, budget, allocation validation |
+| Telegram messages (all commands) | Intent classification + abuse detection |
+| `--ai-report` | Aggregated safety report |
 
 ---
 

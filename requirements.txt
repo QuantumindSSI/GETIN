@@ -6,3 +6,4 @@ python-telegram-bot>=21.0
 apscheduler>=3.10
 solders>=0.20
 solana>=0.35
+pydantic-ai>=2.0

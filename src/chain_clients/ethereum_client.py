@@ -146,6 +146,21 @@ class EthereumClient:
 
         built = func.build_transaction(tx_params)
 
+        # AI sanitisation of on-chain transaction
+        from src.ai_sanitizer import get_ai_sanitizer
+        ai_check = get_ai_sanitizer().sanitise_transaction(
+            action=function_name,
+            protocol="ethereum",
+            chain="ethereum",
+            amount=value_eth,
+            contract_address=contract_address,
+            extra={"gas_limit": gas_limit},
+        )
+        if not ai_check.is_safe:
+            raise SafetyError(f"AI safety check failed: {ai_check.warnings}")
+        for w in ai_check.warnings:
+            print(f"[AI WARNING] {w}")
+
         if self.guard.is_dry_run():
             print(f"[DRY RUN] Would send tx to {contract_address}.{function_name}")
             print(f"  Params: {built}")

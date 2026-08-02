@@ -32,6 +32,7 @@ class YieldHarvester:
         sol_rpc: Optional[str] = None,
         strategy_name: str = "conservative",
         wallet_name: str = "wallet_01",
+        sol_wallet_name: Optional[str] = None,
         guard: Optional[SafetyGuard] = None,
     ):
         self.guard = guard or SafetyGuard()
@@ -44,7 +45,8 @@ class YieldHarvester:
                 print(f"Warning: Ethereum RPC connection failed: {exc}")
         if sol_rpc:
             try:
-                self.sol_client = SolanaClient(sol_rpc, wallet_name=wallet_name, guard=self.guard)
+                sol_name = sol_wallet_name or wallet_name
+                self.sol_client = SolanaClient(sol_rpc, wallet_name=sol_name, guard=self.guard)
             except Exception as exc:
                 print(f"Warning: Solana RPC connection failed: {exc}")
 

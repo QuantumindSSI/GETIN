@@ -1,8 +1,4 @@
-import os
-from typing import Any, Dict, Optional
-
-from web3 import Web3
-from eth_account import Account
+from typing import Any, Dict, List, Optional, Tuple
 
 from src.chain_clients.ethereum_client import EthereumClient
 from src.chain_clients.solana_client import SolanaClient
@@ -19,32 +15,31 @@ class WalletManager:
 
     def __init__(
         self,
-        rpc_url: str = "https://rpc.ankr.com/eth",
-        wallet_name: str = "wallet_01",
+        eth_rpc: Optional[str] = None,
         sol_rpc: Optional[str] = None,
-        private_key: Optional[str] = None,
+        wallet_name: str = "wallet_01",
+        sol_wallet_name: Optional[str] = None,
         guard: Optional[SafetyGuard] = None,
     ):
         self.guard = guard or SafetyGuard()
         self.eth_client: Optional[EthereumClient] = None
         self.sol_client: Optional[SolanaClient] = None
 
-        # Detect chain type: Ethereum RPC by default, Solana if RPC URL contains 'solana'
-        is_solana = rpc_url and "solana" in rpc_url.lower()
-
-        if not is_solana and rpc_url:
+        if eth_rpc:
             try:
-                self.eth_client = EthereumClient(rpc_url, wallet_name, guard=self.guard)
+                self.eth_client = EthereumClient(eth_rpc, wallet_name, guard=self.guard)
             except Exception:
                 pass
 
+        sol_name = sol_wallet_name or wallet_name
         if sol_rpc:
             try:
-                self.sol_client = SolanaClient(sol_rpc, wallet_name, guard=self.guard)
+                self.sol_client = SolanaClient(sol_rpc, sol_name, guard=self.guard)
             except Exception:
                 pass
 
         self.wallet_name = wallet_name
+        self.sol_wallet_name = sol_name
 
     @property
     def eth_address(self) -> Optional[str]:
@@ -53,6 +48,10 @@ class WalletManager:
     @property
     def sol_address(self) -> Optional[str]:
         return self.sol_client.address if self.sol_client else None
+
+    @property
+    def addresses(self) -> Dict[str, Optional[str]]:
+        return {"ethereum": self.eth_address, "solana": self.sol_address}
 
     def get_eth_balance(self) -> float:
         if not self.eth_client:
@@ -143,3 +142,11 @@ class WalletManager:
 
     def address(self) -> str:
         return self.eth_address or self.sol_address or ""
+
+    def all_addresses(self) -> List[Tuple[str, str]]:
+        result: List[Tuple[str, str]] = []
+        if self.eth_address:
+            result.append(("ethereum", self.eth_address))
+        if self.sol_address:
+            result.append(("solana", self.sol_address))
+        return result

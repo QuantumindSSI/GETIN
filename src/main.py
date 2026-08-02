@@ -12,6 +12,7 @@ from src.safety_guard import SafetyGuard
 from src.wallet_manager import WalletManager
 from src.wallet_setup import generate_wallet, generate_solana_wallet, import_mnemonic
 from src.yield_scanner import YieldScanner
+from src.ai_sanitizer import get_ai_sanitizer
 
 
 WARNING = """
@@ -45,12 +46,42 @@ def main() -> None:
     parser.add_argument("--budget-gbp", type=float, default=0.0, help="GBP budget for --invest")
     parser.add_argument("--rpc", default=os.getenv("ETH_RPC_URL", "https://eth.drpc.org"), help="Ethereum RPC endpoint")
     parser.add_argument("--sol-rpc", default=os.getenv("SOL_RPC_URL", "https://api.mainnet-beta.solana.com"), help="Solana RPC endpoint")
-    parser.add_argument("--wallet", default="wallet_01", help="Ethereum wallet name for transaction execution")
     parser.add_argument("--sol-wallet", default="solana_01", help="Solana wallet name for transaction execution")
+    parser.add_argument("--wallet", default="wallet_01", help="Ethereum wallet name for transaction execution")
     parser.add_argument("--dry-run", action="store_true", help="Force dry-run mode for this run")
     parser.add_argument("--yes", action="store_true", help="Skip confirmations (dangerous)")
+    parser.add_argument("--export-phantom", metavar="WALLET_NAME", nargs="?", const="solana_01",
+                        help="Export wallet as Phantom-compatible base58 key")
+    parser.add_argument("--import-phantom", metavar="BASE58_KEY",
+                        help="Import a Phantom wallet private key")
+    parser.add_argument("--phantom-name", default="phantom_imported",
+                        help="Name for imported Phantom wallet (default: phantom_imported)")
+    parser.add_argument("--phantom-balance", metavar="ADDRESS",
+                        help="Show SOL/token balances for a Phantom wallet address")
+    parser.add_argument("--phantom-qr", metavar="ADDRESS_OR_DEEPLINK",
+                        help="Show QR code for Phantom deep link or wallet address")
+    parser.add_argument("--ai-report", action="store_true", help="Show AI sanitisation statistics")
 
     args = parser.parse_args()
+
+    # ── AI Sanitisation: validate all commands and arguments ──
+    ai = get_ai_sanitizer()
+    cmd_args = {k: v for k, v in vars(args).items() if v not in (None, False, [], "", 0, 0.0)}
+    active_cmd = None
+    for flag in ("invest", "harvest", "yield_scan", "market", "positions",
+                 "unwind", "generate_wallet", "generate_solana_wallet",
+                 "import_mnemonic"):
+        if getattr(args, flag, None):
+            active_cmd = flag
+            break
+    if active_cmd:
+        cmd_result = ai.sanitise_command(active_cmd, cmd_args)
+        if cmd_result.rejected:
+            print(f"\n[AI SAFETY] Command REJECTED: {cmd_result.reason}")
+            sys.exit(1)
+        if cmd_result.warnings:
+            for w in cmd_result.warnings:
+                print(f"[AI WARNING] {w}")
 
     if args.dry_run:
         os.environ["DRY_RUN"] = "true"
@@ -98,6 +129,15 @@ def main() -> None:
             sys.exit(1)
         print(f"Strategy: {args.strategy} | Budget: GBP {args.budget_gbp}")
         print(f"DRY RUN: {guard.is_dry_run()}")
+        pfolio = ai.sanitise_portfolio_action(
+            strategy=args.strategy, budget_gbp=args.budget_gbp,
+            action_type="invest",
+        )
+        if not pfolio.is_safe:
+            print(f"\n[AI SAFETY] Portfolio action REJECTED: {pfolio.warnings}")
+            sys.exit(1)
+        for w in pfolio.warnings:
+            print(f"[AI WARNING] {w}")
         pm = PortfolioManager(
             strategy_name=args.strategy,
             eth_rpc=args.rpc, sol_rpc=args.sol_rpc,
@@ -107,7 +147,8 @@ def main() -> None:
         pm.run_full_deployment(args.budget_gbp)
         harv = YieldHarvester(
             eth_rpc=args.rpc, sol_rpc=args.sol_rpc,
-            strategy_name=args.strategy, wallet_name=args.wallet, guard=guard,
+            strategy_name=args.strategy, wallet_name=args.wallet,
+            sol_wallet_name=args.sol_wallet, guard=guard,
         )
         harv.record_baselines()
         return
@@ -116,7 +157,8 @@ def main() -> None:
     if args.harvest:
         harv = YieldHarvester(
             eth_rpc=args.rpc, sol_rpc=args.sol_rpc,
-            strategy_name=args.strategy, wallet_name=args.wallet, guard=guard,
+            strategy_name=args.strategy, wallet_name=args.wallet,
+            sol_wallet_name=args.sol_wallet, guard=guard,
         )
         summary = harv.run_harvest()
         print(json.dumps(summary, indent=2))
@@ -190,14 +232,71 @@ def main() -> None:
             print(f"{'Protocol':<32} {'Asset':<10} {'APY %':>8} {'TVL':>16}  {'6h ROI/$1000':>15} {'30d ROI/$1000':>15}")
             print("-" * 115)
             total = 0.0
+            flagged = 0
             for p in pools:
+                validated = ai.sanitise_yield_entry(p)
+                if validated.warning:
+                    print(f"  [AI] {validated.label}: {validated.warning}")
+                    flagged += 1
                 roi = scanner.calculate_roi(p["apy"])
                 print(f"{p['label']:<32} {p['asset']:<10} {p['apy']:>7.2f}% ${p['tvl']:>14,.0f}  ${roi['roi_6h_usd']:>13.4f}  ${roi['roi_30d_usd']:>13.2f}")
                 total += p["tvl"]
             print("-" * 115)
             print(f"{'Total TVL tracked':<32} {'':<10} {'':>8} ${total:>14,.0f}")
+            if flagged:
+                print(f"\n[AI] {flagged} yield entries flagged as suspicious.")
             print()
             print("ROI uses compound APY formula: amount * ((1 + APY)^(fraction) - 1)")
+# ── Phantom Wallet ──
+    if args.import_phantom:
+        from src.phantom_wallet import import_phantom
+        try:
+            import_phantom(args.import_phantom, args.phantom_name)
+        except ValueError as e:
+            print(f"Import failed: {e}")
+            sys.exit(1)
+        return
+
+    if args.export_phantom:
+        from src.phantom_wallet import export_phantom
+        try:
+            export_phantom(args.export_phantom)
+        except (FileNotFoundError, ValueError) as e:
+            print(f"Export failed: {e}")
+            sys.exit(1)
+        return
+
+    if args.phantom_balance:
+        from src.phantom_wallet import get_phantom_balances
+        try:
+            b = get_phantom_balances(args.phantom_balance, args.sol_rpc)
+            print(f"Wallet: {args.phantom_balance}")
+            print(f"SOL:    {b['SOL']:.6f}")
+            for token, bal in b.items():
+                if token != "SOL" and bal > 0:
+                    print(f"{token}: {bal:.6f}")
+        except Exception as e:
+            print(f"Balance query failed: {e}")
+            sys.exit(1)
+        return
+
+    if args.phantom_qr:
+        from src.phantom_wallet import show_qr_code
+        show_qr_code(args.phantom_qr, "phantom")
+        return
+
+    # ── AI Safety Report ──
+        report = ai.get_report()
+        print("\n" + "=" * 50)
+        print("AI SANITISATION REPORT")
+        print("=" * 50)
+        print(f"Total checks: {report.total_checks}")
+        print(f"Passed:       {report.passed}")
+        print(f"Rejected:     {report.rejected}")
+        if report.warnings:
+            print(f"\nWarnings ({len(report.warnings)}):")
+            for w in report.warnings[-20:]:
+                print(f"  - {w}")
 
 
 if __name__ == "__main__":
