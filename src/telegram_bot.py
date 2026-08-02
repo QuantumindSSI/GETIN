@@ -42,7 +42,10 @@ START_TEXT = (
     "/unwind — Exit all yield protocols back to wallet\n\n"
     "Wallet:\n"
     "/wallet — Generate ETH wallet\n"
-    "/solana_wallet — Generate Solana wallet\n\n"
+    "/solana_wallet — Generate Solana wallet\n"
+    "/export_phantom — Export Solana wallet to Phantom/Solflare\n"
+    "/phantom_balance ADDRESS — Check Phantom/Solflare wallet balances\n"
+    "/phantom_qr ADDRESS — QR code for Phantom mobile scanning\n\n"
     "Safety:\n"
     "/safety — Show safety limits and DRY_RUN status\n"
     "/help — This message\n\n"
@@ -345,6 +348,72 @@ async def dryrun_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     )
 
 
+async def export_phantom_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Export current Solana wallet to Phantom/Solflare compatible base58 key."""
+    try:
+        from src.phantom_wallet import export_phantom
+        wallet = context.args[0] if context.args else "solana_01"
+        base58 = export_phantom(wallet)
+        # Send only first/last few chars for safety in chat
+        safe_preview = f"{base58[:8]}...{base58[-8:]}"
+        await update.message.reply_text(
+            f"<b>Phantom/Solflare Export — {wallet}</b>\n\n"
+            f"<code>{base58}</code>\n\n"
+            "SAVE THIS KEY SECURELY. Anyone with this key controls the wallet.\n\n"
+            "Import into Phantom: Settings → Manage Wallets → Import Private Key\n"
+            "Import into Solflare: Settings → Security & Privacy → Import Wallet\n\n"
+            f"Wallet address: <code>{base58}</code>",
+            parse_mode=ParseMode.HTML,
+        )
+    except Exception as e:
+        await update.message.reply_text(f"Export failed: {e}")
+
+
+async def phantom_balance_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Show SOL/token balances for a Phantom/Solflare wallet address."""
+    if not context.args:
+        await update.message.reply_text("Usage: /phantom_balance <SOLANA_ADDRESS>")
+        return
+    address = context.args[0]
+    await update.message.reply_text(f"Fetching balances for <code>{address}</code>...", parse_mode=ParseMode.HTML)
+    try:
+        from src.phantom_wallet import get_phantom_balances
+        balances = get_phantom_balances(address, SOL_RPC)
+        lines = [
+            f"<b>Wallet Balances</b>",
+            f"Address: <code>{address}</code>",
+            "",
+            f"SOL: {balances['SOL']:.6f}",
+        ]
+        for name, bal in sorted(balances.items()):
+            if name == "SOL":
+                continue
+            lines.append(f"{name}: {bal:.6f}")
+        await update.message.reply_text("\n".join(lines), parse_mode=ParseMode.HTML)
+    except Exception as e:
+        await update.message.reply_text(f"Balance query failed: {e}")
+
+
+async def phantom_qr_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None:
+    """Generate QR code for a Solana address or deep link."""
+    if not context.args:
+        await update.message.reply_text("Usage: /phantom_qr <SOLANA_ADDRESS_OR_DEEPLINK>")
+        return
+    data = " ".join(context.args)
+    try:
+        from src.phantom_wallet import show_qr_code
+        show_qr_code(data, "tg_phantom")
+        await update.message.reply_text(
+            f"<b>Phantom QR Code</b>\n\n"
+            f"Saved to <code>wallets/tg_phantom_qr.png</code>\n\n"
+            f"Scan with Phantom or Solflare mobile app to open.\n"
+            f"URL: <code>{data}</code>",
+            parse_mode=ParseMode.HTML,
+        )
+    except Exception as e:
+        await update.message.reply_text(f"QR generation failed: {e}")
+
+
 def build_app() -> Application:
     app = Application.builder().token(BOT_TOKEN).build()
     app.add_handler(CommandHandler("start", start))
@@ -354,6 +423,9 @@ def build_app() -> Application:
     app.add_handler(CommandHandler("prices", prices_cmd))
     app.add_handler(CommandHandler("wallet", wallet_cmd))
     app.add_handler(CommandHandler("solana_wallet", solana_wallet_cmd))
+    app.add_handler(CommandHandler("export_phantom", export_phantom_cmd))
+    app.add_handler(CommandHandler("phantom_balance", phantom_balance_cmd))
+    app.add_handler(CommandHandler("phantom_qr", phantom_qr_cmd))
     app.add_handler(CommandHandler("invest", invest_cmd))
     app.add_handler(CommandHandler("harvest", harvest_cmd))
     app.add_handler(CommandHandler("positions", positions_cmd))
