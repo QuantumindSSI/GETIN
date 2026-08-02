@@ -66,11 +66,21 @@ def main() -> None:
 
     # ── AI Sanitisation: validate all commands and arguments ──
     ai = get_ai_sanitizer()
-    cmd_args = {k: v for k, v in vars(args).items() if v not in (None, False, [], "", 0, 0.0)}
+    core_flags = {
+        "invest", "harvest", "yield_scan", "market", "positions",
+        "unwind", "generate_wallet", "generate_solana_wallet",
+        "import_mnemonic",
+    }
+    core_arg_keys = {
+        "strategy", "budget_gbp", "rpc", "sol_rpc", "wallet",
+        "sol_wallet", "currency_symbols", "dry_run", "yes",
+    }
+    cmd_args = {
+        k: v for k, v in vars(args).items()
+        if k in core_arg_keys and v not in (None, False, [], "", 0, 0.0)
+    }
     active_cmd = None
-    for flag in ("invest", "harvest", "yield_scan", "market", "positions",
-                 "unwind", "generate_wallet", "generate_solana_wallet",
-                 "import_mnemonic"):
+    for flag in core_flags:
         if getattr(args, flag, None):
             active_cmd = flag
             break
@@ -285,7 +295,7 @@ def main() -> None:
         show_qr_code(args.phantom_qr, "phantom")
         return
 
-    # ── AI Safety Report ──
+    if args.ai_report:
         report = ai.get_report()
         print("\n" + "=" * 50)
         print("AI SANITISATION REPORT")
