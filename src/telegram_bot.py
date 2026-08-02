@@ -210,8 +210,40 @@ async def invest_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE) -> None
     except ValueError:
         await update.message.reply_text("Budget must be a number (GBP).")
         return
+
+    # ── Pre-flight guardrail check ──
+    from src.investment_guard import InvestmentGuard
+    from src.safety_guard import SafetyGuard
+    guard = SafetyGuard()
+    inv_guard = InvestmentGuard(guard)
+    report = inv_guard.pre_flight(
+        strategy_name=strategy,
+        budget_gbp=budget,
+        wallet_name="wallet_01",
+        sol_wallet_name="solana_01",
+        eth_rpc=ETH_RPC,
+        sol_rpc=SOL_RPC,
+    )
+
+    # Send the plan preview
+    plan_text = inv_guard.format_plan(report)
+    if len(plan_text) > 4000:
+        plan_text = plan_text[:4000] + "\n... (truncated)"
+
+    if not report.is_approved:
+        await update.message.reply_text(
+            f"<b>INVESTMENT BLOCKED</b>\n\n"
+            f"<pre>{plan_text}</pre>\n\n"
+            "Fix the issues above and retry.",
+            parse_mode=ParseMode.HTML,
+        )
+        return
+
     msg = await update.message.reply_text(
-        f"Starting deployment: {strategy} strategy, GBP {budget} budget..."
+        f"Pre-flight checks PASSED.\n\n"
+        f"<pre>{plan_text}</pre>\n\n"
+        f"Starting deployment: {strategy} strategy, GBP {budget} budget...",
+        parse_mode=ParseMode.HTML,
     )
     def _run():
         guard = SafetyGuard()

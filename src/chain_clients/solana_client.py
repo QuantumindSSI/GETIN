@@ -117,6 +117,7 @@ class SolanaClient:
         wallet_name: str = "solana_01",
         guard: Optional[SafetyGuard] = None,
     ):
+        self.rpc_url = rpc_url
         self.rpc = SolanaRpcClient(rpc_url)
         self.keypair = self._load_keypair(wallet_name)
         self.guard = guard or SafetyGuard()

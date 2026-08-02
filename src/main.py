@@ -137,6 +137,23 @@ def main() -> None:
         if args.budget_gbp <= 0:
             print("Usage: --invest --budget-gbp 100 [--strategy conservative]")
             sys.exit(1)
+
+        # Pre-flight guardrail check
+        from src.investment_guard import InvestmentGuard
+        inv_guard = InvestmentGuard(guard)
+        report = inv_guard.pre_flight(
+            strategy_name=args.strategy,
+            budget_gbp=args.budget_gbp,
+            wallet_name=args.wallet,
+            sol_wallet_name=args.sol_wallet,
+            eth_rpc=args.rpc,
+            sol_rpc=args.sol_rpc,
+        )
+        print(inv_guard.format_plan(report))
+        if not report.is_approved:
+            print("\nINVESTMENT BLOCKED — fix the issues above and retry.")
+            sys.exit(1)
+
         print(f"Strategy: {args.strategy} | Budget: GBP {args.budget_gbp}")
         print(f"DRY RUN: {guard.is_dry_run()}")
         pfolio = ai.sanitise_portfolio_action(

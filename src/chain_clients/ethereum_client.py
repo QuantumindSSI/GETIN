@@ -31,6 +31,7 @@ class EthereumClient:
         wallet_name: str = "wallet_01",
         guard: Optional[SafetyGuard] = None,
     ):
+        self.rpc_url = rpc_url
         self.w3 = Web3(Web3.HTTPProvider(rpc_url, request_kwargs={"timeout": 60}))
         if not self.w3.is_connected():
             raise ConnectionError(f"Cannot connect to Ethereum RPC: {rpc_url}")

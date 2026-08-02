@@ -9,6 +9,7 @@ from src.chain_clients.ethereum_client import EthereumClient
 from src.chain_clients.solana_client import SolanaClient
 from src.config_manager import load_yaml
 from src.exchange_client import ExchangeClient
+from src.investment_guard import InvestmentGuard, PreFlightReport
 from src.safety_guard import SafetyGuard, SafetyError
 from src.yield_protocols.aave_v3 import AaveV3Client
 from src.yield_protocols.jupiter_solana import JupiterSwap
@@ -44,12 +45,16 @@ class PortfolioManager:
         guard: Optional[SafetyGuard] = None,
     ):
         self.guard = guard or SafetyGuard()
+        self.investment_guard = InvestmentGuard(self.guard)
         self.exchange: Optional[ExchangeClient] = None
         cfg = load_yaml("config/strategies.yaml")
         self.strategy = cfg.get("strategies", {}).get(strategy_name)
         if not self.strategy:
             raise ValueError(f"Strategy '{strategy_name}' not found in config/strategies.yaml")
         self.protocols = cfg.get("protocols", {})
+        self.strategy_name = strategy_name
+        self.wallet_name = wallet_name
+        self.sol_wallet_name = sol_wallet_name
 
         self.eth_client: Optional[EthereumClient] = None
         self.sol_client: Optional[SolanaClient] = None
@@ -191,7 +196,8 @@ class PortfolioManager:
 
     def run_full_deployment(self, gbp_budget: float):
         """
-        End-to-end flow:
+        End-to-end flow with full guardrails:
+          0. Pre-flight checks (wallet, Kraken, daily limits, plan)
           1. Buy ETH + SOL on Kraken
           2. Withdraw to self-custody wallets
           3. Deposit into yield protocols
@@ -199,6 +205,31 @@ class PortfolioManager:
         print("=" * 60)
         print("PORTFOLIO DEPLOYMENT START")
         print("=" * 60)
+
+        # ── Run pre-flight guardrails ──
+        report = self.investment_guard.pre_flight(
+            strategy_name=self.strategy_name,
+            budget_gbp=gbp_budget,
+            wallet_name=self.wallet_name,
+            sol_wallet_name=self.sol_wallet_name,
+            eth_rpc=self.eth_client.rpc_url if self.eth_client else None,
+            sol_rpc=self.sol_client.rpc_url if self.sol_client else None,
+        )
+
+        # Display the plan
+        print(self.investment_guard.format_plan(report))
+
+        # Block if not approved
+        if not report.is_approved:
+            raise SafetyError(
+                f"Pre-flight checks FAILED. {len(report.failures)} blocking issue(s). "
+                "Fix them and retry."
+            )
+
+        # Record daily spend
+        eth_est = gbp_budget * report.eth_gbp_alloc / 2000 if gbp_budget > 0 else 0
+        sol_est = gbp_budget * report.sol_gbp_alloc / 120 if gbp_budget > 0 else 0
+        self.investment_guard.record_spend(eth_est, sol_est)
 
         eth_alloc = self.strategy.get("chains", {}).get("ethereum", {}).get("allocations", {})
         sol_alloc = self.strategy.get("chains", {}).get("solana", {}).get("allocations", {})
@@ -210,7 +241,7 @@ class PortfolioManager:
         from src.ai_sanitizer import get_ai_sanitizer
         ai = get_ai_sanitizer()
         pfolio = ai.sanitise_portfolio_action(
-            strategy=self.strategy.get("name", "conservative"),
+            strategy=self.strategy.get("name", self.strategy_name),
             budget_gbp=gbp_budget,
             action_type="invest",
             eth_pct=eth_weight * 100,
@@ -224,7 +255,6 @@ class PortfolioManager:
         eth_weight = sum(eth_alloc.values()) / 100
         sol_weight = sum(sol_alloc.values()) / 100
 
-        # Estimate GBP split (very rough, in practice we'd fetch prices)
         eth_gbp = gbp_budget * eth_weight
         sol_gbp = gbp_budget * sol_weight
 
