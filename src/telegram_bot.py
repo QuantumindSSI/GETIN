@@ -3,7 +3,7 @@ import json
 import os
 import signal
 from datetime import datetime, timezone
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Optional
 
 from telegram import Update
 from telegram.constants import ChatType, ParseMode
@@ -31,6 +31,7 @@ DEFAULT_SYMBOLS = ["BTC", "ETH", "SOL"]
 
 START_TEXT = (
     "GETIN Yield Farming Agent — real on-chain automation.\n\n"
+    "/start — Show this message\n\n"
     "Yield Commands:\n"
     "/yield — Live DeFi yields from DefiLlama (ETH + SOL)\n"
     "/market — Global crypto market snapshot\n"
