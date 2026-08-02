@@ -74,3 +74,10 @@ protocols:
     asset: SOL
     output_token: mSOL
     mint: "mSoLzYCxHdYgdzU16g5QSh3i5K3z3KZK7ytfqcJm7So"
+
+  kamino_lend_sol:
+    chain: solana
+    type: lending
+    asset: SOL
+    mint: "So11111111111111111111111111111111111111112"
+    note: "Kamino Lend SOL — deposit native SOL, earn yield"
